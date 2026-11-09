@@ -5,6 +5,11 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
+[features]
+default = []
+# Retained only for upstream compatibility/testing; FABER never enables it by default.
+legacy-embedded-assistant = []
+
 [lints]
 workspace = true
 

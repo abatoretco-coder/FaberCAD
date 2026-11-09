@@ -10,8 +10,11 @@
 use crate::ui_kit::{Container, Surface};
 
 pub mod access;
+#[cfg(any(test, feature = "legacy-embedded-assistant"))]
 pub mod agent_chat;
 pub mod agent_cursor;
+pub mod agent_preferences;
+#[cfg(any(test, feature = "legacy-embedded-assistant"))]
 pub mod ai_connect;
 pub mod bidi;
 pub mod blur;
@@ -495,8 +498,10 @@ pub struct Services {
     /// Show the designs the browser keeps for itself; None: the host has no such store.
     pub browser_files: Option<Box<dyn Fn()>>,
     /// HTTP for the agent chat's API agents (OpenAI-compatible and Anthropic-compatible endpoints); None: no API agents.
+    #[cfg(any(test, feature = "legacy-embedded-assistant"))]
     pub agent_http: Option<agent_chat::backend::HttpFn>,
     /// The system keychain, for API agents' keys; None: keys can't be stored.
+    #[cfg(any(test, feature = "legacy-embedded-assistant"))]
     pub secrets: Option<std::sync::Arc<dyn agent_chat::backend::Secrets>>,
     /// Upload a model to EasyPrint (Printables' slicer in the browser) and answer with the address
     /// to open (`easyprint_ui`); None: this host can't, and the menu doesn't offer it.
@@ -790,8 +795,10 @@ pub struct SolveApp {
     /// The agent cursor acting out control requests.
     pub agent: agent_cursor::AgentCursor,
     /// The agent chat panel (docs/design/in-app-agent-chat.md).
+    #[cfg(any(test, feature = "legacy-embedded-assistant"))]
     pub agent_chat: agent_chat::AgentChat,
     /// Making SolidCraft available to the AI apps installed here ([`ai_connect`]).
+    #[cfg(any(test, feature = "legacy-embedded-assistant"))]
     pub ai_connect: ai_connect::State,
     pending_shots: Vec<(u64, Option<String>, std::sync::mpsc::Sender<Value>, f64)>,
     shot_chat_turns: std::collections::HashMap<u64, std::sync::Arc<std::sync::atomic::AtomicBool>>,
@@ -975,7 +982,9 @@ impl SolveApp {
             held_click: Vec::new(),
             synthetic_press: false,
             control_rx: None,
+            #[cfg(any(test, feature = "legacy-embedded-assistant"))]
             agent_chat: Default::default(),
+            #[cfg(any(test, feature = "legacy-embedded-assistant"))]
             ai_connect: Default::default(),
             control_held: Default::default(),
             control_job: None,
@@ -1100,6 +1109,7 @@ impl SolveApp {
             self.render_workspace.defer_path_host(key, move || solidcraft_gpu::path::host_on_adapter(&adapter).map_err(|e| e.to_string()));
         }
         render_workspace::sync_backend(self);
+        #[cfg(any(test, feature = "legacy-embedded-assistant"))]
         ai_connect::tick(self);
         self.msaa_supported = rs.msaa_supported.clone();
         let info = rs.adapter.get_info();
@@ -1643,6 +1653,7 @@ impl SolveApp {
                     prefs::apply_new_design(self);
                 }
                 if matches!(id, "file.new" | "doc.open" | "doc.recover") {
+                    #[cfg(any(test, feature = "legacy-embedded-assistant"))]
                     documents::reset_chat(self);
                     self.edit_in_place.active = None;
                     render_workspace::reset_document(self);
@@ -1795,6 +1806,7 @@ impl SolveApp {
             return;
         }
         if id == "ui.assistant" {
+            #[cfg(any(test, feature = "legacy-embedded-assistant"))]
             if agent_chat::shown(self) {
                 agent_chat::toggle(self);
             }
@@ -3319,6 +3331,7 @@ impl SolveApp {
             if !keymap::capturing(self) {
                 expression_complete::begin_frame(ctx);
             }
+            #[cfg(any(test, feature = "legacy-embedded-assistant"))]
             agent_chat::toggle_shortcut(self, ctx);
             // A digit for a construction line's Length box is not a shortcut (#10258).
             sketch_construction::claim_typed_length(self, ctx);
@@ -3333,6 +3346,7 @@ impl SolveApp {
             // Files dropped on the theme Import tile are themes (#8226).
             prefs::take_theme_drops(self, ctx);
             // Files dropped on the agent chat attach to its next message instead.
+            #[cfg(any(test, feature = "legacy-embedded-assistant"))]
             agent_chat::take_drops(self, ctx);
             for f in ctx.input(|i| i.raw.dropped_files.clone()) {
                 let p = f.path().to_string_lossy().to_string();
@@ -3501,6 +3515,7 @@ impl SolveApp {
         update::show(self, ui.ctx());
         install::show(self, ui.ctx());
         // Settings › AI's Add agent dialog: Settings opens over Home too (#3483).
+        #[cfg(any(test, feature = "legacy-embedded-assistant"))]
         if agent_chat::shown(self) {
             agent_chat::settings::dialog(self, ui.ctx());
         }
@@ -3510,6 +3525,7 @@ impl SolveApp {
             if self.home.open {
                 // Agent detection runs in the background and is only received by `agent_chat::poll`
                 // Polling here is required for the detection to complete on Home
+                #[cfg(any(test, feature = "legacy-embedded-assistant"))]
                 agent_chat::poll(self, ui.ctx());
                 // Preferences and Keyboard Shortcuts open from Home too (its links, the gear, Ctrl+,).
                 prefs::show(self, ui.ctx());
@@ -3537,6 +3553,7 @@ impl SolveApp {
             }
             theme::TabAccent::publish(self, ui.ctx());
             browser::publish_row_prefs(self, ui.ctx());
+            #[cfg(any(test, feature = "legacy-embedded-assistant"))]
             if !floating {
                 agent_chat::show(self, ui);
             }
@@ -3607,6 +3624,7 @@ impl SolveApp {
             // Apply shared Browser/History output before viewport and menu consumers.
             semantic_content::finalize(self, ui.ctx());
             browser::editors(self, ui);
+            #[cfg(any(test, feature = "legacy-embedded-assistant"))]
             if floating {
                 agent_chat::show(self, ui);
             }

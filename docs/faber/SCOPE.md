@@ -1,5 +1,9 @@
 # FABER scope
 
+FABER is our customized version of SolidCraft, developed in the `FaberCAD`
+repository. The former standalone prototype is retired and is not a dependency.
+See [project identity](PROJECT-IDENTITY.md) and [documentation index](README.md).
+
 FABER is a deterministic CAD application with an external MCP interface. It contains no
 embedded AI assistant, model runtime, or model-provider integration.
 
@@ -47,6 +51,11 @@ capabilities instead of replacing them.
 The upstream embedded assistant UI is not a FABER capability. FABER builds must omit it
 while retaining the independent CLI and MCP server.
 
+Secondary FCStd/Rhino decoders are now opt-in through `foreign-cad-import` in the
+source configuration. STEP and native `.sc` support remain independent. The
+[development selection](DEVELOPMENT-MODE.md) also omits optional CPU rendering;
+its native qualification is pending, and the existing executable is unchanged.
+
 ## CAD catalogue in the MVP
 
 FABER reuses the existing **Standard Parts** catalogue instead of introducing another library
@@ -63,6 +72,11 @@ The owner expanded the scope on 2026-11-08 with Workshop: nominal wood stock and
 wood/PLA materials, procedural printable templates, A1-dependent geometric
 preflight and the existing local slicer handoff. See [WORKSHOP.md](WORKSHOP.md).
 This is not structural certification or a replacement slicer.
+
+The woodworking follow-up adds actual-contact paired dowel drilling, a recomputed
+local cutting list, and original generic furniture hardware with real joints.
+See [DESIGN-WORKFLOWS.md](DESIGN-WORKFLOWS.md) for qualification scope and remaining
+manufacturer-library and native-build gaps.
 
 ## Explicitly out of scope
 

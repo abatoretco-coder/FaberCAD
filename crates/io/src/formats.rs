@@ -47,8 +47,8 @@ pub struct ImportSpec {
     /// Options offered at import time; each `param` is a parameter of `doc.open` and of the
     /// matching `file.insert_*` command.
     pub options: &'static [OptionSpec],
-    /// Read through cadmpeg (FreeCAD `.FCStd`, Rhino `.3dm`). Every current host builds it;
-    /// `native = false` leaves these rows out for a host that cannot.
+    /// Read through optional cadmpeg decoders (FreeCAD `.FCStd`, Rhino `.3dm`).
+    /// Both the build feature and the host capability must allow these formats.
     pub native_only: bool,
 }
 
@@ -347,11 +347,12 @@ pub fn for_path(path: &str) -> Option<&'static FormatSpec> {
 /// The first importing row matching the path's extension, any case.
 pub fn import_for_path(path: &str) -> Option<&'static FormatSpec> {
     let ext = ext_of(path)?;
-    FORMATS.iter().find(|f| f.import.is_some() && f.extensions.contains(&ext.as_str()))
+    importable(true).find(|f| f.extensions.contains(&ext.as_str()))
 }
 
-/// The importing rows, without the cadmpeg ones when `native` is false.
+/// Importing rows supported by this build and the host's secondary-import capability.
 pub fn importable(native: bool) -> impl Iterator<Item = &'static FormatSpec> {
+    let native = native && crate::NATIVE_CAD_IMPORT_AVAILABLE;
     FORMATS.iter().filter(move |f| f.import.as_ref().is_some_and(|i| native || !i.native_only))
 }
 
@@ -490,13 +491,17 @@ mod tests {
         assert!(for_path("nodot").is_none());
     }
 
-    /// cadmpeg is pure Rust now, so the browser build offers its rows too; `native = false`
-    /// stays for a host that cannot build it.
+    /// Host permission cannot enable a decoder absent from this build.
     #[test]
     fn a_host_without_cadmpeg_leaves_its_rows_out() {
-        assert!(importable(true).any(|f| f.id == "fcstd"));
-        assert!(open_extensions(true).contains(&"fcstd"));
-        assert!(open_extensions(true).contains(&"3dm"));
+        let enabled = crate::NATIVE_CAD_IMPORT_AVAILABLE;
+        assert_eq!(importable(true).any(|f| f.id == "fcstd"), enabled);
+        assert_eq!(open_extensions(true).contains(&"fcstd"), enabled);
+        assert_eq!(open_extensions(true).contains(&"3dm"), enabled);
+        assert_eq!(import_for_path("part.FCStd").is_some(), enabled);
+        assert_eq!(import_for_path("part.3DM").is_some(), enabled);
+        assert!(import_for_path("part.step").is_some());
+        assert!(import_for_path("part.sc").is_some());
         assert!(importable(false).all(|f| f.id != "fcstd" && f.id != "3dm"));
         assert!(!open_extensions(false).contains(&"fcstd"));
         assert!(open_extensions(false).contains(&"igs"));
@@ -510,7 +515,7 @@ mod tests {
         assert_eq!(find("SolidCraft design (container or JSON)"), vec!["sc", "solidcraft", "solvecraft", "json"]);
         assert_eq!(find("STEP"), vec!["step", "stp"]);
         assert_eq!(find("IGES"), vec!["igs", "iges"]);
-        assert_eq!(find("FreeCAD and Rhino"), vec!["fcstd", "3dm"]);
+        assert_eq!(find("FreeCAD and Rhino"), if crate::NATIVE_CAD_IMPORT_AVAILABLE { vec!["fcstd", "3dm"] } else { vec![] });
         assert_eq!(find("Mesh (3MF, STL, OBJ, glTF)"), vec!["stl", "3mf", "obj", "glb", "gltf"]);
         assert_eq!(find("Point cloud (PLY, XYZ, PTS)"), vec!["ply", "xyz", "pts"]);
         assert_eq!(find("Sketch drawings (DXF, SVG)"), vec!["dxf", "svg"]);

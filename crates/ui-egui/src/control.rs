@@ -624,7 +624,7 @@ pub fn view_png(app: &SolveApp, w: u32, h: u32) -> Result<Vec<u8>, String> {
 }
 
 pub fn handle(app: &mut SolveApp, ctx: &egui::Context, req: &ControlRequest) -> Outcome {
-    crate::agent_chat::with_tool_request(app, req.chat_turn.as_ref(), |app| handle_request(app, ctx, req))
+    crate::external_control::with_tool_request(app, req.chat_turn.as_ref(), |app| handle_request(app, ctx, req))
 }
 
 fn handle_request(app: &mut SolveApp, ctx: &egui::Context, req: &ControlRequest) -> Outcome {
@@ -1443,7 +1443,10 @@ fn dispatch(app: &mut SolveApp, ctx: &egui::Context, method: &str, p: &Value) ->
             None => ok(json!({"question": app.tree.capture_prompt, "pending_moves": app.session.pending_moves.len()})),
         },
         "ui.prefs" => wrap(crate::prefs::control(app, p)),
+        #[cfg(any(test, feature = "legacy-embedded-assistant"))]
         "ui.agent_chat" => wrap(crate::agent_chat::control(app, ctx, p)),
+        #[cfg(not(any(test, feature = "legacy-embedded-assistant")))]
+        "ui.agent_chat" => err("Embedded assistant is unavailable in FABER"),
         "ui.help" => match s("item") {
             Some(i @ ("about" | "updates" | "shortcuts" | "report" | "crashes")) => {
                 crate::help::run(app, ctx, i);

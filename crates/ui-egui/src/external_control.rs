@@ -7,8 +7,85 @@ use crate::ui_kit::BackingTooltipExt as _;
 use crate::ui_kit::{self, Button};
 use crate::{SolveApp, scenario};
 
-/// The embedded upstream assistant remains available to its own tests, never to FABER builds.
-pub(crate) const EMBEDDED_ASSISTANT: bool = cfg!(test);
+/// Production FABER excludes the legacy implementation at compilation, not just in layout.
+pub(crate) const EMBEDDED_ASSISTANT: bool = cfg!(any(test, feature = "legacy-embedded-assistant"));
+
+/// External MCP requests do not require an embedded chat turn or backend.
+pub(crate) fn with_tool_request<T>(
+    app: &mut SolveApp,
+    active: Option<&std::sync::Arc<std::sync::atomic::AtomicBool>>,
+    run: impl FnOnce(&mut SolveApp) -> T,
+) -> T {
+    #[cfg(any(test, feature = "legacy-embedded-assistant"))]
+    {
+        crate::agent_chat::with_tool_request(app, active, run)
+    }
+    #[cfg(not(any(test, feature = "legacy-embedded-assistant")))]
+    {
+        let _ = active;
+        run(app)
+    }
+}
+
+pub(crate) fn tool_space(app: &SolveApp, available: egui::Rect) -> egui::Rect {
+    #[cfg(any(test, feature = "legacy-embedded-assistant"))]
+    {
+        crate::agent_chat::tool_space(app, available)
+    }
+    #[cfg(not(any(test, feature = "legacy-embedded-assistant")))]
+    {
+        let _ = app;
+        available
+    }
+}
+
+pub(crate) fn left_inset(app: &SolveApp, available: egui::Rect) -> f32 {
+    #[cfg(any(test, feature = "legacy-embedded-assistant"))]
+    {
+        crate::agent_chat::left_inset(app, available)
+    }
+    #[cfg(not(any(test, feature = "legacy-embedded-assistant")))]
+    {
+        let _ = (app, available);
+        0.0
+    }
+}
+
+pub(crate) fn owns_keyboard_input(app: &mut SolveApp, ctx: &egui::Context) -> bool {
+    #[cfg(any(test, feature = "legacy-embedded-assistant"))]
+    {
+        crate::agent_chat::owns_keyboard_input(app, ctx)
+    }
+    #[cfg(not(any(test, feature = "legacy-embedded-assistant")))]
+    {
+        let _ = (app, ctx);
+        false
+    }
+}
+
+pub(crate) fn app_bar_button_shown(app: &SolveApp) -> bool {
+    #[cfg(any(test, feature = "legacy-embedded-assistant"))]
+    {
+        crate::agent_chat::app_bar_button_shown(app)
+    }
+    #[cfg(not(any(test, feature = "legacy-embedded-assistant")))]
+    {
+        let _ = app;
+        false
+    }
+}
+
+pub(crate) fn assistant_busy(app: &SolveApp) -> bool {
+    #[cfg(any(test, feature = "legacy-embedded-assistant"))]
+    {
+        app.agent_chat.state() == crate::agent_chat::State::Busy
+    }
+    #[cfg(not(any(test, feature = "legacy-embedded-assistant")))]
+    {
+        let _ = app;
+        false
+    }
+}
 
 const MCP_COMMAND: &str = "solidcraft-cli mcp";
 

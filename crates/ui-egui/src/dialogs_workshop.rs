@@ -29,6 +29,13 @@ pub struct Workshop {
     wood_draft: [String; 4],
     pla_draft: [String; 4],
     wood_material: usize,
+    furniture_template: usize,
+    furniture_draft: [String; 4],
+    travel: String,
+    dowel_diameter: String,
+    clearance: String,
+    drilling_depth: String,
+    dowel_count: String,
 }
 
 fn tr(id: &str) -> String {
@@ -36,7 +43,7 @@ fn tr(id: &str) -> String {
 }
 
 pub fn needs_picks(k: &Workshop) -> bool {
-    k.tab >= 2
+    matches!(k.tab, 2 | 3 | 4 | 5)
 }
 
 pub fn start(app: &SolveApp, id: &str) -> Option<(Kind, Vec<SelInput>)> {
@@ -71,6 +78,13 @@ pub fn start(app: &SolveApp, id: &str) -> Option<(Kind, Vec<SelInput>)> {
             wood_draft: [format!("{} {}", tr("board_name"), app.session.doc.components.len() + 1), "1200".into(), "300".into(), "18".into()],
             pla_draft: [format!("{} {}", tr("part_name"), app.session.doc.components.len() + 1), "60".into(), "30".into(), "6".into()],
             wood_material: 0,
+            furniture_template: 0,
+            furniture_draft: [format!("{} {}", tr("furniture_name"), app.session.doc.components.len() + 1), "60".into(), "40".into(), "2".into()],
+            travel: "110".into(),
+            dowel_diameter: "6".into(),
+            clearance: "0.2".into(),
+            drilling_depth: "12".into(),
+            dowel_count: "2".into(),
         }),
         vec![SelInput::new("Bodies", BODIES, true)],
     ))
@@ -112,13 +126,35 @@ pub fn commands(app: &SolveApp, k: &Workshop, inputs: &[SelInput]) -> Result<Vec
             )])
         }
         4 => crate::dialogs_parts::commands(app, &k.hardware, inputs),
+        5 => {
+            let bodies = picked(inputs);
+            if bodies.len() != 2 {
+                return Err(tr("joinery_selection"));
+            }
+            let count = k.dowel_count.trim().parse::<usize>().map_err(|_| tr("dowel_count_error"))?;
+            if !(1..=16).contains(&count) {
+                return Err(tr("dowel_count_error"));
+            }
+            let depth = number(&k.drilling_depth)?;
+            Ok(vec![(
+                "wood.joinery".into(),
+                json!({"bodies":bodies,"count":count,
+                "diameter_mm":number(&k.dowel_diameter)?,"clearance_mm":number(&k.clearance)?,"depths_mm":[depth,depth]}),
+            )])
+        }
+        7 => Ok(vec![(
+            "furniture.insert".into(),
+            json!({"name":k.name,
+            "template":if k.furniture_template == 0 {"butt_hinge"} else {"drawer_slide"},
+            "length_mm":number(&k.length)?,"width_mm":number(&k.width)?,"thickness_mm":number(&k.thickness)?,"travel":number(&k.travel)?}),
+        )]),
         _ => Ok(vec![("workshop.library".into(), json!({}))]),
     }
 }
 
 pub fn rows(app: &mut SolveApp, ui: &mut egui::Ui, k: &mut Workshop, inputs: &mut [SelInput]) -> bool {
     ui.horizontal_wrapped(|ui| {
-        for (tab, key) in ["wood", "pla", "materials", "preflight", "hardware"].iter().enumerate() {
+        for (tab, key) in ["wood", "pla", "materials", "preflight", "hardware", "joinery", "cut_list", "furniture"].iter().enumerate() {
             let r = ui.selectable_label(k.tab == tab, tr(key));
             scenario::publish_handle(&format!("workshop:tab:{key}"), r.rect.center());
             if r.clicked() {
@@ -129,6 +165,8 @@ pub fn rows(app: &mut SolveApp, ui: &mut egui::Ui, k: &mut Workshop, inputs: &mu
                     k.wood_material = k.material;
                 } else if k.tab == 1 {
                     k.pla_draft = draft;
+                } else if k.tab == 7 {
+                    k.furniture_draft = draft;
                 }
                 k.tab = tab;
                 k.report = None;
@@ -141,8 +179,12 @@ pub fn rows(app: &mut SolveApp, ui: &mut egui::Ui, k: &mut Workshop, inputs: &mu
                     input.accept = accept;
                     input.label = if tab == 4 { "parts.holes" } else { "Bodies" };
                 }
-                if tab == 0 || tab == 1 {
-                    let draft = if tab == 0 { &k.wood_draft } else { &k.pla_draft };
+                if tab == 0 || tab == 1 || tab == 7 {
+                    let draft = match tab {
+                        0 => &k.wood_draft,
+                        1 => &k.pla_draft,
+                        _ => &k.furniture_draft,
+                    };
                     [k.name, k.length, k.width, k.thickness] = draft.clone();
                     if tab == 0 {
                         k.material = k.wood_material;
@@ -156,6 +198,89 @@ pub fn rows(app: &mut SolveApp, ui: &mut egui::Ui, k: &mut Workshop, inputs: &mu
         let mut enter = false;
         if k.tab == 4 {
             return crate::dialogs_parts::rows(app, ui, &mut k.hardware, inputs);
+        }
+        if k.tab == 5 {
+            ui_kit::text(ui, &tr("joinery_note"), ui_kit::Text::Note("joinery_note"));
+            for body in picked(inputs) {
+                ui.label(body);
+            }
+            if picked(inputs).len() != 2 {
+                ui_kit::text(ui, &tr("joinery_selection"), ui_kit::Text::Note("joinery_selection"));
+            }
+            field(ui, "dowel_diameter", &mut k.dowel_diameter);
+            field(ui, "clearance", &mut k.clearance);
+            field(ui, "drilling_depth", &mut k.drilling_depth);
+            field(ui, "dowel_count", &mut k.dowel_count);
+        }
+        if k.tab == 6 {
+            ui_kit::text(ui, &tr("cut_list_note"), ui_kit::Text::Note("cut_list_note"));
+            let report_key = format!("cut_list:{}", app.session.revision);
+            if k.report_key.as_deref() != Some(report_key.as_str()) {
+                k.report = None;
+            }
+            let refresh = ui_kit::button(ui, tr("refresh_cut_list"), Button::Normal);
+            scenario::publish_handle("workshop:refresh_cut_list", refresh.rect.center());
+            if refresh.clicked() {
+                match app.run("wood.cut_list", json!({})) {
+                    Ok(report) => {
+                        k.report = Some(report);
+                        k.report_key = Some(format!("cut_list:{}", app.session.revision));
+                        k.error = None;
+                    }
+                    Err(error) => {
+                        k.report = None;
+                        k.error = Some(error.to_string());
+                    }
+                }
+            }
+            if let Some(report) = &k.report {
+                if let Some(rows) = report["rows"].as_array() {
+                    if rows.is_empty() {
+                        ui.label(tr("no_stock"));
+                    }
+                    egui::ScrollArea::vertical().max_height(280.0).show(ui, |ui| {
+                        for row in rows {
+                            ui.label(format!("{} × {}", row["quantity"], row["component"].as_str().unwrap_or_default()));
+                            ui.label(format!(
+                                "{} × {} × {} mm · {}",
+                                row["length_mm"],
+                                row["width_mm"],
+                                row["thickness_mm"],
+                                row["material"].as_str().unwrap_or_default()
+                            ));
+                            ui.label(tr(match row["grain_axis"].as_str() {
+                                Some("width") => "grain_width",
+                                Some("length") => "grain_length",
+                                _ => "grain_unverified",
+                            }));
+                            if row["shape_status"] != "rectangular_blank" {
+                                ui_kit::text(ui, &tr("machined_stock"), ui_kit::Text::Note("machined_stock"));
+                            }
+                            ui.separator();
+                        }
+                    });
+                }
+                ui_kit::text(ui, &tr("cut_list_limits"), ui_kit::Text::Note("cut_list_limits"));
+            }
+        }
+        if k.tab == 7 {
+            let labels = [tr("butt_hinge"), tr("drawer_slide")];
+            let previous = k.furniture_template;
+            let response = choice_row(ui, &tr("template"), "workshop_furniture_template", &mut k.furniture_template, &[&labels[0], &labels[1]]);
+            scenario::publish_handle("workshop:furniture_template", response.rect.center());
+            if previous != k.furniture_template {
+                let defaults = if k.furniture_template == 0 { ["60", "40", "2", "110"] } else { ["400", "20", "10", "300"] };
+                k.length = defaults[0].into();
+                k.width = defaults[1].into();
+                k.thickness = defaults[2].into();
+                k.travel = defaults[3].into();
+            }
+            ui_kit::text(ui, &tr("furniture_note"), ui_kit::Text::Note("furniture_note"));
+            field(ui, "name", &mut k.name);
+            field(ui, "length", &mut k.length);
+            field(ui, "width", &mut k.width);
+            field(ui, "thickness", &mut k.thickness);
+            field(ui, if k.furniture_template == 0 { "opening_angle" } else { "sliding_travel" }, &mut k.travel);
         }
         if k.tab == 0 {
             let labels: Vec<_> = ["shelf", "sheet", "back_panel", "batten", "worktop"].iter().map(|s| tr(s)).collect();
@@ -286,7 +411,9 @@ pub fn rows(app: &mut SolveApp, ui: &mut egui::Ui, k: &mut Workshop, inputs: &mu
             }
             ui_kit::text(ui, &tr("slicer_note"), ui_kit::Text::Hint("slicer_note"));
         }
-        ui_kit::text(ui, &tr("hardware_note"), ui_kit::Text::Hint("hardware_note"));
+        if k.tab < 5 {
+            ui_kit::text(ui, &tr("hardware_note"), ui_kit::Text::Hint("hardware_note"));
+        }
         if let Some(error) = &k.error {
             ui_kit::text(ui, error, ui_kit::Text::Note("workshop_error"));
         }

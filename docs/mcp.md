@@ -16,6 +16,14 @@ document remains the reference implementation today.
 
 ## Start it
 
+FABER's Workshop follow-up registers `wood.joinery`, `wood.cut_list`,
+`furniture.library` and `furniture.insert` in the same engine command catalogue.
+Use `list_commands` and `describe_command` before calling them through `execute`.
+See [wood/furniture workflows](faber/DESIGN-WORKFLOWS.md) for actual-contact
+requirements, envelope provenance and validation limits. An executable built
+before this follow-up will not expose these new commands; do not mistake a
+cached-binary test for validation of the new registry or native UI.
+
 ```sh
 # Headless: an in-process design session, no window (screenshots are drawn on the GPU).
 solidcraft-cli mcp

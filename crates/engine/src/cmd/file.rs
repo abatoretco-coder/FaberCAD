@@ -175,6 +175,10 @@ fn step_options(p: &Value, cmd: &str) -> Result<StepOptions> {
 
 /// Read a STEP file as an Import feature.
 fn read_step(path: &str, names: solidcraft_io::StepNames) -> Result<solidcraft_io::StepFeature> {
+    if solidcraft_io::is_native_cad_path(path) && !solidcraft_io::NATIVE_CAD_IMPORT_AVAILABLE {
+        // An unavailable decoder must reject before reading a potentially large file.
+        return solidcraft_io::step_import_feature_named(&[], path, names).map_err(|e| EngineError::Other(format!("{path}: {e}")));
+    }
     let bytes = solidcraft_io::limits::read(path, solidcraft_io::limits::Kind::Step).map_err(|e| EngineError::Other(format!("{path}: {e}")))?;
     solidcraft_io::step_import_feature_named(&bytes, path, names).map_err(|e| EngineError::Other(format!("{path}: {e}")))
 }

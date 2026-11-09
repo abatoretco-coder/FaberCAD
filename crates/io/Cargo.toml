@@ -9,6 +9,9 @@ license.workspace = true
 workspace = true
 
 [features]
+default = []
+# Secondary open-format decoders; normal STEP/native design IO is independent.
+foreign-cad-import = ["dep:cadmpeg-core", "dep:cadmpeg-ir", "dep:cadmpeg-registry"]
 # Tests only: trust a model cache even when the build has no git commit.
 trust-unknown-source = []
 
@@ -28,10 +31,10 @@ serde_json = { workspace = true, features = ["raw_value"] }
 sha2 = { workspace = true }
 chardetng = { workspace = true }
 encoding_rs = { workspace = true }
-# FreeCAD and Rhino import (pure Rust, so the browser build has it too).
-cadmpeg-core = { workspace = true }
-cadmpeg-ir = { workspace = true }
-cadmpeg-registry = { workspace = true }
+# Optional pure-Rust secondary decoders, also available to opted-in browser builds.
+cadmpeg-core = { workspace = true, optional = true }
+cadmpeg-ir = { workspace = true, optional = true }
+cadmpeg-registry = { workspace = true, optional = true }
 
 # The model cache's key (build.rs).
 [build-dependencies]

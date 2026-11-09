@@ -1,6 +1,6 @@
 [package]
 name = "solidcraft"
-description = "SolidCraft desktop app"
+description = "FABER desktop CAD, based on SolidCraft"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -9,11 +9,15 @@ default-run = "solidcraft"
 
 [features]
 default = ["raytrace-cpu", "bundled-render-library", "profile"]
+foreign-cad-import = ["solidcraft-engine/foreign-cad-import"]
 bundled-render-library = ["solidcraft-engine/bundled-render-library"]
 raytrace-cpu = ["solidcraft-engine/raytrace-cpu"]
 # The profiler, compiled in so any build can say where its time goes (the Profile operations
 # preference, SOLIDCRAFT_PROFILE=1, diagnostics.profile); it records nothing until asked.
 profile = ["solidcraft-engine/profile"]
+# Legacy provider/credential adapters are excluded from FABER builds. This opt-in
+# keeps the upstream adapters available without enabling FABER's hidden chat UI.
+legacy-embedded-assistant = ["dep:keyring", "solidcraft-ui-egui/legacy-embedded-assistant"]
 
 # The workspace lints, except unsafe_code: denied, not forbidden, so that src/open_documents.rs
 # (macOS file-open events), src/native_crash.rs (Windows exception filter), src/native_crash_macos.rs
@@ -51,7 +55,7 @@ ureq = { version = "3.4", default-features = false, features = ["rustls-no-provi
 rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12", "logging"] }
 # API keys of the agent chat's API agents (docs/agent-chat.md) live in the system keychain:
 # Keychain on macOS, Credential Manager on Windows, the Secret Service (pure-Rust D-Bus) elsewhere.
-keyring = { version = "3.6", default-features = false, features = ["apple-native", "windows-native", "async-secret-service", "async-io", "crypto-rust"] }
+keyring = { version = "3.6", optional = true, default-features = false, features = ["apple-native", "windows-native", "async-secret-service", "async-io", "crypto-rust"] }
 
 [target.'cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))'.dependencies]
 quick-xml = { workspace = true }

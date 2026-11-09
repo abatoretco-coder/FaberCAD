@@ -21,6 +21,7 @@ path = "src/alias.rs"
 
 [features]
 default = ["raytrace-cpu", "profile"]
+foreign-cad-import = ["solidcraft-engine/foreign-cad-import"]
 bundled-render-library = ["solidcraft-engine/bundled-render-library"]
 raytrace-cpu = ["solidcraft-engine/raytrace-cpu"]
 # The profiler, compiled in so any build can say where its time goes (`--profile`,

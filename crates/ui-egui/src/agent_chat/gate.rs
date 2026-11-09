@@ -9,12 +9,12 @@ use serde_json::Value;
 
 /// Changes the agent may make in one turn (requests that run commands; reads don't count); 0 is
 /// no limit, the default. The user can always press Stop.
-pub const DEFAULT_TURN_LIMIT: u32 = 0;
+pub use crate::agent_preferences::DEFAULT_TURN_LIMIT;
 /// What the limit field shows when the user turns the limit on.
 pub const SEEDED_TURN_LIMIT: u32 = 24;
 /// The default before the limit became optional; saved preferences still carry it, so it reads
 /// as no limit.
-pub const OLD_DEFAULT_TURN_LIMIT: u32 = 24;
+pub use crate::agent_preferences::OLD_DEFAULT_TURN_LIMIT;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Verdict {

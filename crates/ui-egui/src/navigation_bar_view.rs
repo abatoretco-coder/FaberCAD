@@ -645,6 +645,7 @@ fn display_menu(app: &mut SolveApp, ui: &mut egui::Ui) {
     if response.clicked() {
         app.ui.agent_cursor.show = !app.ui.agent_cursor.show;
     }
+    #[cfg(any(test, feature = "legacy-embedded-assistant"))]
     if crate::agent_chat::shown(app) {
         let mut chat = NavigationMenuRow::new("agent_chat", app.tr("navbar.agent_chat"), "agent_chat");
         chat.selected = app.agent_chat.open;

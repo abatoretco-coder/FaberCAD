@@ -49,6 +49,7 @@ pub struct DocSlot {
     view: DocView,
     occurrence_move: Option<crate::browser::OccMove>,
     reveals: crate::browser::PendingReveals,
+    #[cfg(any(test, feature = "legacy-embedded-assistant"))]
     agent_chat: crate::agent_chat::AgentChat,
     /// Its linked design files as the design last read them (`Documents::link_stamps`).
     link_stamps: Vec<(u64, crate::linked_source::Stamp)>,
@@ -151,6 +152,7 @@ impl DocSlot {
             view: DocView::default(),
             occurrence_move: None,
             reveals: Default::default(),
+            #[cfg(any(test, feature = "legacy-embedded-assistant"))]
             agent_chat: Default::default(),
             link_stamps: Vec::new(),
             edit_in_place: None,
@@ -256,7 +258,9 @@ fn put_view(app: &mut SolveApp, v: DocView) {
 }
 
 /// Put `slot` into the app and return what was there.
-fn swap_in(app: &mut SolveApp, mut slot: DocSlot) -> DocSlot {
+fn swap_in(app: &mut SolveApp, slot: DocSlot) -> DocSlot {
+    #[cfg(any(test, feature = "legacy-embedded-assistant"))]
+    let mut slot = slot;
     let reveals = crate::browser::take_reveals(app);
     crate::semantic_content::leave_document(app);
     if crate::render_workspace::active(app) {
@@ -277,8 +281,11 @@ fn swap_in(app: &mut SolveApp, mut slot: DocSlot) -> DocSlot {
     app.viewport.hover = None;
     crate::design_properties::close_object(app);
     crate::sketch_attachment_ui::clear(app);
-    crate::agent_chat::leave_document(app);
-    app.agent_chat.swap_document(&mut slot.agent_chat);
+    #[cfg(any(test, feature = "legacy-embedded-assistant"))]
+    {
+        crate::agent_chat::leave_document(app);
+        app.agent_chat.swap_document(&mut slot.agent_chat);
+    }
     let out_rev = app.session.revision;
     // A click's point means nothing in the other design.
     app.edit_anchor_hint = None;
@@ -294,6 +301,7 @@ fn swap_in(app: &mut SolveApp, mut slot: DocSlot) -> DocSlot {
         view: take_view(app),
         occurrence_move: std::mem::replace(&mut app.tree.occurrence_move, slot.occurrence_move),
         reveals,
+        #[cfg(any(test, feature = "legacy-embedded-assistant"))]
         agent_chat: slot.agent_chat,
         link_stamps: std::mem::replace(&mut app.docs.link_stamps, slot.link_stamps),
         edit_in_place: std::mem::replace(&mut app.edit_in_place.active, slot.edit_in_place),
@@ -453,6 +461,7 @@ pub(crate) fn reuse_path(app: &mut SolveApp, path: &str) -> Result<bool, String>
         app.docs.slots.iter().position(|s| s.as_ref().is_some_and(|s| matches(&s.session)))
     };
     let Some(index) = index else { return Ok(false) };
+    #[cfg(any(test, feature = "legacy-embedded-assistant"))]
     if app.agent_chat.following_document && index != app.docs.active {
         return Err("the design is already open in another tab; select that tab to continue in its own conversation".into());
     }
@@ -495,7 +504,10 @@ pub fn open_tab(app: &mut SolveApp, session: Session) -> Result<(), String> {
     }
     let at = app.docs.active + 1;
     app.docs.slots.insert(at, Some(DocSlot::new(session)));
+    #[cfg(any(test, feature = "legacy-embedded-assistant"))]
     crate::agent_chat::follow_new_tab(app, |app| switch(app, at));
+    #[cfg(not(any(test, feature = "legacy-embedded-assistant")))]
+    switch(app, at);
     crate::history_folds::load(app);
     app.fit_view();
     Ok(())
@@ -519,6 +531,7 @@ pub fn adopt(app: &mut SolveApp, session: Session) -> bool {
         crate::design_properties::close_object(app);
         crate::sketch_attachment_ui::clear(app);
         app.session.replace_design(session);
+        #[cfg(any(test, feature = "legacy-embedded-assistant"))]
         reset_chat(app);
         // The blank design's record of its links goes with it; the new one's start now.
         app.docs.link_stamps.clear();
@@ -657,6 +670,7 @@ pub fn close(app: &mut SolveApp, i: usize, force: bool) {
         crate::browser::discard_reveals(app);
         crate::semantic_content::leave_document(app);
         // The last design: a blank one takes its place.
+        #[cfg(any(test, feature = "legacy-embedded-assistant"))]
         reset_chat(app);
         if let Some(a) = app.autosave.as_mut().and_then(|a| a.active.take()) {
             a.discard();
@@ -696,6 +710,7 @@ pub fn close(app: &mut SolveApp, i: usize, force: bool) {
 }
 
 /// A replacement starts a fresh conversation, unless the current chat itself requested it.
+#[cfg(any(test, feature = "legacy-embedded-assistant"))]
 pub(crate) fn reset_chat(app: &mut SolveApp) {
     if app.agent_chat.following_document {
         crate::agent_chat::continue_in_document(app);
@@ -713,6 +728,7 @@ pub(crate) fn reset_chat(app: &mut SolveApp) {
 }
 
 /// Hidden conversations must also stop when AI is disabled or the application quits.
+#[cfg(any(test, feature = "legacy-embedded-assistant"))]
 pub(crate) fn disconnect_background_chats(app: &mut SolveApp, wait: bool) {
     for slot in app.docs.background_mut() {
         slot.agent_chat.disconnect_document(&mut slot.session, wait);
@@ -720,6 +736,7 @@ pub(crate) fn disconnect_background_chats(app: &mut SolveApp, wait: bool) {
 }
 
 /// Stop only the hidden conversations whose endpoint permission was revoked.
+#[cfg(any(test, feature = "legacy-embedded-assistant"))]
 pub(crate) fn disconnect_background_endpoint(app: &mut SolveApp, id: &str) {
     for slot in app.docs.background_mut() {
         slot.agent_chat.disconnect_endpoint(&mut slot.session, id);

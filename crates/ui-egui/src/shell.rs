@@ -194,6 +194,7 @@ fn occluding_rects(app: &SolveApp, fitting: bool, input: bool, include_confirm: 
     if app.universal_panel_host_enabled() || crate::render_workspace::active(app) || Container::for_layout(app.ui.layout, Surface::Panel).floating() {
         rects.extend(app.shell.cards.iter().copied());
         rects.extend(app.shell.panels.iter().copied());
+        #[cfg(any(test, feature = "legacy-embedded-assistant"))]
         if !app.universal_panel_host_enabled() && crate::agent_chat::shown(app) && app.agent_chat.open && !app.preferences.agent_chat_popped {
             rects.extend(app.agent_chat.panel_rect);
         }
@@ -304,7 +305,7 @@ pub(crate) fn workspace_content(app: &SolveApp, mut content: Rect) -> Rect {
 /// Assistant's outside-rail exception stays in its owner.
 pub(crate) fn tool_drag_rect(app: &SolveApp, placement: Rect) -> Rect {
     let gap = Container::for_layout(app.ui.layout, Surface::Feature).gap();
-    let mut bounds = crate::agent_chat::tool_space(app, app.viewport.rect.unwrap_or(placement));
+    let mut bounds = crate::external_control::tool_space(app, app.viewport.rect.unwrap_or(placement));
     for card in app.shell.cards.iter().filter(|r| r.is_finite() && r.is_positive()) {
         bounds.min.y = within(card.bottom() + gap, bounds.top(), bounds.bottom());
     }

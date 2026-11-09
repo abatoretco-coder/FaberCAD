@@ -1,4 +1,9 @@
-# SolidCraft: instructions for agents
+# FABER: instructions for agents
+
+FABER is our customized SolidCraft-based CAD product. `FaberCAD` is this active
+repository; the former prototype at `D:\Projets\Faber` is retired and was requested
+for deletion by the owner. Never recreate or use it as a dependency. Start with
+`docs/faber/README.md` and `docs/faber/PROJECT-IDENTITY.md` for product context.
 
 SolidCraft is a clean-room, pure-Rust parametric 3D CAD app (sketch solver, feature timeline, B-rep kernel, an egui UI that agents drive). This file is a router: the hard rules, then the skill to read for your task. Humans: CONTRIBUTING.md.
 
@@ -10,6 +15,9 @@ SolidCraft is a clean-room, pure-Rust parametric 3D CAD app (sketch solver, feat
 - Report source checks and native product tests separately; quick green does not certify
   native behavior or authorize publication. See `docs/faber/CI.md`.
 - Inherited full-CI-before-commit instructions below and in skills are superseded.
+- The owner rejected the 6 GiB native-build exception and confirmed SolidCraft
+  remains the base. Do not revive that proposal, migrate to FreeCAD, or silently
+  raise resource limits. Reduce the production/development surface first.
 
 ## Start here
 Work: ROADMAP.md, "Where help is wanted most" in CONTRIBUTING.md, issues labelled `help wanted`, `good first issue`, `needs-triage`; architecture in `docs/architecture.md`. Local `plan/` notes are optional.
@@ -25,7 +33,8 @@ Work: ROADMAP.md, "Where help is wanted most" in CONTRIBUTING.md, issues labelle
 - Layering (geom, sketch/kernel/render, doc, io, engine, ui-egui, apps); only `crates/kernel` uses truck: `cargo xtask layers`.
 - One outer UI container, one camera path (`navigation::handle`), colours from theme tokens: `cargo xtask ui-containers`.
 - Application code is Rust only and builds for wasm: `cargo xtask wasm`, `cargo xtask web-offline-test`.
-- The product name is SolidCraft; the old name lives only in `docs/compatibility.md`.
+- The product name is FABER, our version of SolidCraft. Preserve upstream credits,
+  licences and compatibility identifiers; see `docs/faber/PROJECT-IDENTITY.md`.
 - Sorted lists (message catalogs, `mod` lines, languages) stay sorted: `cargo xtask lists`. Never edit generated files (`docs/features.md`, `THIRD-PARTY-LICENSES.txt`) in a PR.
 - A design-format change is ONE new file in `crates/doc/src/format/pending/`: `scripts/test-format-pending.sh`.
 - A command has input and output schemas (will become required; `schema/unconverted.txt` only shrinks): `skills/solidcraft-commands/SKILL.md`.

@@ -252,7 +252,7 @@ fn width(vp: egui::Rect) -> f32 {
 
 /// The viewport the palette docks into.
 fn viewport(app: &SolveApp, ctx: &egui::Context) -> egui::Rect {
-    crate::agent_chat::tool_space(app, crate::shell::content_rect(app, app.viewport.rect.unwrap_or_else(|| ctx.content_rect())))
+    crate::external_control::tool_space(app, crate::shell::content_rect(app, app.viewport.rect.unwrap_or_else(|| ctx.content_rect())))
 }
 
 /// Is a sketch being edited? That is the palette's own condition.

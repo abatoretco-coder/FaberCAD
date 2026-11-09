@@ -16,6 +16,13 @@ pub const OPFS_PREFIX: &str = "/opfs/";
 /// Paths written here are handed to the user as downloads.
 pub const DOWNLOADS_PREFIX: &str = "/downloads/";
 
+/// The same capability-aware extensions for both browser open pickers.
+pub fn open_extensions() -> Vec<&'static str> {
+    let mut extensions = solidcraft_engine::io::formats::open_extensions(solidcraft_engine::io::NATIVE_CAD_IMPORT_AVAILABLE);
+    extensions.extend(["dxf", "svg"]);
+    extensions
+}
+
 /// Where what a command wrote to an engine path goes.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum WriteTo {
@@ -354,10 +361,8 @@ mod web {
         let options = Object::new();
         let _ = Reflect::set(&options, &"multiple".into(), &JsValue::FALSE);
         let extensions = Array::new();
-        let designs = solidcraft_engine::io::DESIGN_EXTS.iter().map(|e| format!(".{e}"));
-        let others = [".json", ".step", ".stp", ".3mf", ".stl", ".obj", ".glb", ".gltf", ".fcstd", ".3dm", ".dxf", ".svg"].map(String::from);
-        for e in designs.chain(others) {
-            extensions.push(&e.into());
+        for extension in super::open_extensions() {
+            extensions.push(&format!(".{extension}").into());
         }
         let accept = Object::new();
         let _ = Reflect::set(&accept, &"application/octet-stream".into(), &extensions);
@@ -597,6 +602,19 @@ mod web {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn both_open_pickers_offer_only_compiled_import_formats() {
+        let extensions = open_extensions();
+        for extension in ["sc", "json", "step", "stp", "igs", "iges", "stl", "3mf", "dxf", "svg", "ply", "xyz", "pts"] {
+            assert!(extensions.contains(&extension), "missing supported format {extension}");
+        }
+        for extension in ["fcstd", "3dm"] {
+            assert_eq!(extensions.contains(&extension), solidcraft_engine::io::NATIVE_CAD_IMPORT_AVAILABLE);
+        }
+        let unique: std::collections::BTreeSet<_> = extensions.iter().collect();
+        assert_eq!(unique.len(), extensions.len(), "picker extensions must not repeat");
+    }
 
     #[test]
     fn a_disk_path_round_trips_its_handle_id_and_name() {

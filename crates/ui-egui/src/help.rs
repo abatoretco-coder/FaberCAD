@@ -1,5 +1,5 @@
 //! The Help menu (the ? button on the application bar): Documentation (the online book), About
-//! SolidCraft (version, commit, build date, licences, attributions, fonts), the keyboard shortcuts
+//! FABER (version, commit, build date, licences, attributions, fonts), the keyboard shortcuts
 //! (read only), Messages (every status message of the run, #2763), and Report an Issue, which
 //! opens a local editable report draft.
 
@@ -30,7 +30,7 @@ pub fn diagnostics(app: &SolveApp) -> String {
     let renderer = if app.viewport.gpu.is_some() { "GPU" } else { "CPU" };
     let count = |n: usize, one: &str, many: &str| format!("{n} {}", if n == 1 { one } else { many });
     format!(
-        "SolidCraft {VERSION} ({COMMIT}, built {BUILD_DATE})\nOS: {} {}\nRenderer: {renderer}{}\nWindow: {}\nDesign: {} ({}, {})",
+        "FABER (based on SolidCraft) {VERSION} ({COMMIT}, built {BUILD_DATE})\nOS: {} {}\nRenderer: {renderer}{}\nWindow: {}\nDesign: {} ({}, {})",
         std::env::consts::OS,
         std::env::consts::ARCH,
         app.help.gpu.as_ref().map(|g| format!(", {g}")).unwrap_or_default(),
@@ -87,8 +87,8 @@ pub fn run(app: &mut SolveApp, ctx: &egui::Context, item: &str) {
 #[cfg(not(target_arch = "wasm32"))]
 fn connect_assistants() -> Vec<String> {
     use solidcraft_engine::agent_setup as setup;
-    let Some(cli) = crate::agent_chat::find_cli() else {
-        return vec!["solidcraft-cli was not found next to SolidCraft; run `solidcraft-cli mcp setup` from a terminal.".into()];
+    let Some(cli) = crate::cli_link::find_cli() else {
+        return vec!["solidcraft-cli was not found next to FABER; run `solidcraft-cli mcp setup` from a terminal.".into()];
     };
     let cli = cli.canonicalize().unwrap_or(cli).to_string_lossy().trim_start_matches(r"\\?\").to_owned();
     match setup::setup(&[], &setup::Env::from_process(), &cli) {
@@ -136,7 +136,7 @@ pub fn show(app: &mut SolveApp, ctx: &egui::Context, anchor: egui::Pos2) {
                 crate::context_menu::menu_frame(ui, |ui| {
                     for (id, label, icon) in [
                         ("docs", "Documentation", "library"),
-                        ("about", "About SolidCraft", "help"),
+                        ("about", crate::i18n::tr("faber.about.title"), "help"),
                         ("updates", crate::i18n::tr("update.check_for_updates"), "update"),
                         ("shortcuts", "Keyboard Shortcuts", "list"),
                         ("messages", "Messages…", "list"),
@@ -182,7 +182,7 @@ fn about(app: &mut SolveApp, ctx: &egui::Context) {
     if !app.help.about {
         return;
     }
-    let (closed, action) = ui_kit::Window::new(egui::Id::unique("sc_about"), "help", crate::i18n::tr_label("About SolidCraft"))
+    let (closed, action) = ui_kit::Window::new(egui::Id::unique("sc_about"), "help", crate::i18n::tr("faber.about.title"))
         .cards(2.0)
         .actions("", "Close", None)
         .show(ctx, true, |ui| {
@@ -191,11 +191,7 @@ fn about(app: &mut SolveApp, ctx: &egui::Context) {
                 &crate::i18n::format("help.build", &[("version", VERSION), ("commit", COMMIT), ("date", BUILD_DATE)]),
                 ui_kit::Text::Report("version", false),
             );
-            ui_kit::text(
-                ui,
-                crate::i18n::tr_label("Open-source parametric 3D CAD in Rust. Licensed MIT OR Apache-2.0."),
-                ui_kit::Text::Note("description"),
-            );
+            ui_kit::text(ui, crate::i18n::tr("faber.about.foundation"), ui_kit::Text::Note("description"));
             let copy = ui_kit::button(ui, crate::i18n::tr_label("Copy diagnostic information"), ui_kit::Button::Normal);
             crate::scenario::publish_target("about:copy_diagnostics", copy.rect);
             if copy.clicked() {

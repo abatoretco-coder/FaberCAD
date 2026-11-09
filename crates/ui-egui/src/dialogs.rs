@@ -3811,7 +3811,7 @@ pub fn show(app: &mut SolveApp, ctx: &egui::Context) {
     }
     // Physical materials: the library's, then the design's own (material.create).
     let t = Tokens::get();
-    let vp = crate::agent_chat::tool_space(app, crate::shell::content_rect(app, app.viewport.rect.unwrap_or_else(|| ctx.content_rect())));
+    let vp = crate::external_control::tool_space(app, crate::shell::content_rect(app, app.viewport.rect.unwrap_or_else(|| ctx.content_rect())));
     // The Sketch Palette owns the right edge for as long as a sketch is being edited. A dialog
     // started there docks at the left instead, so neither panel hides the other.
     let column = crate::dialog_column::place(app, ctx, &d);
@@ -4106,7 +4106,10 @@ pub fn show(app: &mut SolveApp, ctx: &egui::Context) {
         // Edit Text applies its own way: its live changes and OK are one undo step.
         let run = match &mut d.kind {
             Kind::Text(k) => Some(crate::sketch_text::apply(app, k)),
+            #[cfg(any(test, feature = "legacy-embedded-assistant"))]
             Kind::ChatContext => Some(crate::agent_chat::pick_done(app, &d)),
+            #[cfg(not(any(test, feature = "legacy-embedded-assistant")))]
+            Kind::ChatContext => None,
             _ => match begin_applying(app, &d) {
                 // Computing: the dialog stays, saying so, until it is in.
                 Some(job) => {

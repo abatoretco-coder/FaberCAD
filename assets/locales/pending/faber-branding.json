@@ -1,0 +1,10 @@
+{
+  "en": {
+    "faber.about.foundation": "FABER is our version of SolidCraft. Open-source parametric 3D CAD in Rust, licensed MIT OR Apache-2.0.",
+    "faber.about.title": "About FABER"
+  },
+  "fr": {
+    "faber.about.foundation": "FABER est notre version de SolidCraft. CAO 3D paramétrique libre en Rust, sous licence MIT OU Apache-2.0.",
+    "faber.about.title": "À propos de FABER"
+  }
+}

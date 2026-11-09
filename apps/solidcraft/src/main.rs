@@ -1,4 +1,4 @@
-//! SolidCraft desktop app.
+//! FABER desktop CAD, based on SolidCraft.
 //!
 //! Usage: `solidcraft [--control <port>] [--sample] [--crash-log] [--safe-mode] [design.sc | part.step]`
 //!
@@ -203,6 +203,7 @@ impl eframe::App for App {
                 // others. Ask for the foreground once, now that it is on screen; never again, so
                 // later frames don't take the focus from whatever the user moved to. Automation
                 // over the control channel keeps the focus where it is.
+                #[cfg(feature = "legacy-embedded-assistant")]
                 if !self.take_focus_unwanted {
                     ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
                 }
@@ -301,6 +302,7 @@ impl eframe::App for App {
     }
     fn on_exit(&mut self) {
         // The agent chat's agent and everything it started end with the app.
+        #[cfg(feature = "legacy-embedded-assistant")]
         solidcraft_ui_egui::agent_chat::shutdown(&mut self.solve);
         // A save still being written ends before the app does.
         solidcraft_ui_egui::save_job::tick(&mut self.solve, true);
@@ -511,15 +513,20 @@ fn services(cc: &eframe::CreationContext<'_>, folder: &DialogFolder) -> Services
             desktop_chooser::note_opening(&chooser_ctx);
             // The file type the command reads comes first, so the picker opens on it (#1801).
             let mut dialog = open_folder.start(open_parent.clone());
+            let first: Vec<&str> = first
+                .iter()
+                .copied()
+                .filter(|ext| io::NATIVE_CAD_IMPORT_AVAILABLE || !io::NATIVE_CAD_EXTS.iter().any(|secondary| secondary.eq_ignore_ascii_case(ext)))
+                .collect();
             if !first.is_empty() {
                 let label = first.iter().map(|e| e.to_uppercase()).collect::<Vec<_>>().join(", ");
-                dialog = dialog.add_filter(label, &case_variants(first));
+                dialog = dialog.add_filter(label, &case_variants(&first));
             }
             // The groups come from the format registry, so a new format joins this dialog by itself.
-            let mut everything = io::formats::open_extensions(true);
+            let mut everything = io::formats::open_extensions(io::NATIVE_CAD_IMPORT_AVAILABLE);
             everything.extend(["dxf", "svg"]);
             dialog = dialog.add_filter(solidcraft_ui_egui::i18n::tr("file.open.drawing_filter"), &case_variants(&everything));
-            for (label, exts) in io::formats::import_filters(true) {
+            for (label, exts) in io::formats::import_filters(io::NATIVE_CAD_IMPORT_AVAILABLE) {
                 dialog = dialog.add_filter(label, &case_variants(&exts));
             }
             let future = dialog.add_filter("All files", &["*"]).pick_file();
@@ -586,7 +593,9 @@ fn services(cc: &eframe::CreationContext<'_>, folder: &DialogFolder) -> Services
         download_design: None,
         easyprint_upload: Some(std::sync::Arc::new(easyprint_upload)),
         browser_files: None,
+        #[cfg(feature = "legacy-embedded-assistant")]
         agent_http: Some(std::sync::Arc::new(agent_http)),
+        #[cfg(feature = "legacy-embedded-assistant")]
         secrets: Some(std::sync::Arc::new(Keychain)),
         show_in_folder: Some(Box::new(|path| {
             let folder = std::path::Path::new(path).parent().unwrap_or_else(|| std::path::Path::new("."));
@@ -647,7 +656,13 @@ fn http_download(url: &str, to: &std::path::Path, progress: &dyn Fn(u64, Option<
 /// HTTP for the agent chat's API agents (OpenAI-compatible endpoints, docs/agent-chat.md): to the
 /// URL the user configured, which may be plain HTTP on this computer (Ollama, LM Studio). No
 /// redirects (a key must not follow one elsewhere), at most 16 MB back.
+#[cfg(feature = "legacy-embedded-assistant")]
 fn agent_http(r: &solidcraft_ui_egui::agent_chat::backend::HttpRequest) -> Result<(u16, Vec<u8>), String> {
+    request_http(&r.method, &r.url, &r.headers, r.body.as_deref(), r.timeout_s)
+}
+
+/// Bounded HTTP used by the explicit EasyPrint upload, independently of model providers.
+fn request_http(method: &str, url: &str, headers: &[(String, String)], body: Option<&[u8]>, timeout_s: u64) -> Result<(u16, Vec<u8>), String> {
     use std::time::Duration;
     let tls = ureq::tls::TlsConfig::builder()
         .root_certs(ureq::tls::RootCerts::PlatformVerifier)
@@ -656,21 +671,21 @@ fn agent_http(r: &solidcraft_ui_egui::agent_chat::backend::HttpRequest) -> Resul
     let agent: ureq::Agent = ureq::Agent::config_builder()
         .tls_config(tls)
         .http_status_as_error(false)
-        .timeout_global(Some(Duration::from_secs(r.timeout_s.clamp(1, 3600))))
+        .timeout_global(Some(Duration::from_secs(timeout_s.clamp(1, 3600))))
         .timeout_connect(Some(Duration::from_secs(10)))
         .user_agent("SolidCraft")
         .max_redirects(0)
         .build()
         .into();
-    let mut response = if r.method == "POST" {
-        let mut req = agent.post(&r.url);
-        for (k, v) in &r.headers {
+    let mut response = if method == "POST" {
+        let mut req = agent.post(url);
+        for (k, v) in headers {
             req = req.header(k, v);
         }
-        req.send(r.body.as_deref().unwrap_or_default())
+        req.send(body.unwrap_or_default())
     } else {
-        let mut req = agent.get(&r.url);
-        for (k, v) in &r.headers {
+        let mut req = agent.get(url);
+        for (k, v) in headers {
             req = req.header(k, v);
         }
         req.call()
@@ -682,32 +697,32 @@ fn agent_http(r: &solidcraft_ui_egui::agent_chat::backend::HttpRequest) -> Resul
 }
 
 /// Open with EasyPrint: upload the model to Printables' import endpoint on a worker and answer on
-/// `done` with the address to open. Through [`agent_http`]: no redirects, a timeout, no cookies.
+/// `done` with the address to open. No redirects, a timeout, no cookies.
 fn easyprint_upload(name: &str, bytes: Vec<u8>, done: std::sync::mpsc::Sender<Result<String, String>>) {
     use solidcraft_engine::easyprint;
     let name = name.to_string();
     std::thread::spawn(move || {
         let (content_type, body) = easyprint::multipart(&name, &bytes);
-        let request = solidcraft_ui_egui::agent_chat::backend::HttpRequest {
-            method: "POST",
-            url: easyprint::IMPORT_URL.into(),
-            headers: vec![("Content-Type".into(), content_type), ("Accept".into(), "application/json".into())],
-            body: Some(body),
-            timeout_s: 180,
-        };
-        let _ = done.send(agent_http(&request).and_then(|(status, body)| easyprint::parse_import_response(status, &body)));
+        let headers = [("Content-Type".into(), content_type), ("Accept".into(), "application/json".into())];
+        let _ = done.send(
+            request_http("POST", easyprint::IMPORT_URL, &headers, Some(&body), 180)
+                .and_then(|(status, body)| easyprint::parse_import_response(status, &body)),
+        );
     });
 }
 
 /// API keys in the system keychain (service "SolidCraft agent chat", one entry per agent).
+#[cfg(feature = "legacy-embedded-assistant")]
 struct Keychain;
 
+#[cfg(feature = "legacy-embedded-assistant")]
 impl Keychain {
     fn entry(id: &str) -> Result<keyring::Entry, String> {
         keyring::Entry::new("SolidCraft agent chat", id).map_err(|e| e.to_string())
     }
 }
 
+#[cfg(feature = "legacy-embedded-assistant")]
 impl solidcraft_ui_egui::agent_chat::backend::Secrets for Keychain {
     fn get(&self, id: &str) -> Result<Option<String>, String> {
         match Self::entry(id)?.get_password() {
@@ -943,7 +958,7 @@ impl Drop for DriverClient {
 
 fn main() -> eframe::Result {
     #[cfg(target_os = "macos")]
-    objc2_foundation::NSProcessInfo::processInfo().setProcessName(objc2_foundation::ns_string!("SolidCraft"));
+    objc2_foundation::NSProcessInfo::processInfo().setProcessName(objc2_foundation::ns_string!("FABER"));
     mark("main");
     // On OCLP-patched Macs, wgpu picks a Metal Shading Language standard that the system's
     // compiler refuses (`invalid value 'metal3.2'`), because the patched OS reports a newer
@@ -1227,8 +1242,11 @@ fn main() -> eframe::Result {
             }
             // The agent chat's MCP bridge reaches the app through an endpoint of its own, started
             // on a free port the first time the chat connects (docs/agent-chat.md).
-            let ctx = cc.egui_ctx.clone();
-            app.agent_chat.control_starter = Some(Box::new(move |tx| control_server::listen_agent(tx, ctx.clone())));
+            #[cfg(feature = "legacy-embedded-assistant")]
+            {
+                let ctx = cc.egui_ctx.clone();
+                app.agent_chat.control_starter = Some(Box::new(move |tx| control_server::listen_agent(tx, ctx.clone())));
+            }
             if sample {
                 if let Err(e) = app.session.run_script(&solidcraft_engine::sample::script()) {
                     app.set_status(format!("sample: {e}"), true);

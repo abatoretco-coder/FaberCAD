@@ -95,6 +95,7 @@ pub fn start(listen_on: control_auth::Listen, ctx: egui::Context) -> Receiver<Co
 /// port with a fresh token of its own (never `SOLIDCRAFT_CONTROL_TOKEN`), written to the usual
 /// token file, where the MCP server finds it, so the token never passes through the agent. Its
 /// requests go to `tx`, where the chat's gate reads them; one may wait long for the user's Allow.
+#[cfg(feature = "legacy-embedded-assistant")]
 pub fn listen_agent(tx: Sender<ControlRequest>, ctx: egui::Context) -> Option<u16> {
     let Some(token) = new_token() else {
         solidcraft_engine::note!("solidcraft: agent chat endpoint not started: no random token available");

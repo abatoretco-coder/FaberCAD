@@ -1,4 +1,9 @@
-# Contributing to SolidCraft
+# Contributing to FABER
+
+FABER is our customized version of SolidCraft; `FaberCAD` is the active repository.
+Start with [FABER documentation](docs/faber/README.md). Detailed SolidCraft
+guidance below is inherited technical reference. FABER identity, scope and the
+owner's lightweight validation policy take precedence.
 
 > FABER owner policy (2026-11-09): use `python scripts/faber_ci.py` for bounded
 > source checks (180 seconds / 1 GiB). The inherited full-suite instructions in

@@ -42,14 +42,20 @@ impl Product {
         match self {
             Self::Browser | Self::RenderBrowser => app.ui.show_browser,
             Self::History => app.ui.show_timeline,
+            #[cfg(any(test, feature = "legacy-embedded-assistant"))]
             Self::Assistant => app.agent_chat.open,
+            #[cfg(not(any(test, feature = "legacy-embedded-assistant")))]
+            Self::Assistant => false,
         }
     }
     fn set_visible(self, app: &mut crate::SolveApp, open: bool) {
         match self {
             Self::Browser | Self::RenderBrowser => app.ui.show_browser = open,
             Self::History => app.ui.show_timeline = open,
+            #[cfg(any(test, feature = "legacy-embedded-assistant"))]
             Self::Assistant => app.agent_chat.open = open,
+            #[cfg(not(any(test, feature = "legacy-embedded-assistant")))]
+            Self::Assistant => {}
         }
     }
 
@@ -85,7 +91,10 @@ impl Product {
         match self {
             Self::Browser => !render && !crate::render_ui::focused(app),
             Self::History => !render && !app.preferences.history_in_browser,
+            #[cfg(any(test, feature = "legacy-embedded-assistant"))]
             Self::Assistant => crate::agent_chat::shown(app) && !app.preferences.agent_chat_popped,
+            #[cfg(not(any(test, feature = "legacy-embedded-assistant")))]
+            Self::Assistant => false,
             Self::RenderBrowser => render && !crate::render_ui::focused(app),
         }
     }
@@ -340,7 +349,10 @@ pub(crate) fn drain_production_actions(app: &mut crate::SolveApp) -> PanelResult
                     crate::timeline::run_transport(app, control);
                 }
             }
+            #[cfg(any(test, feature = "legacy-embedded-assistant"))]
             Product::Assistant => crate::agent_chat::request_new_chat(app),
+            #[cfg(not(any(test, feature = "legacy-embedded-assistant")))]
+            Product::Assistant => {}
             Product::RenderBrowser => {
                 let params = match action.action.0.as_str() {
                     "by-object" => json!({"by_look":false}),
@@ -854,7 +866,10 @@ impl FramePanelContent for ProductionFrame<'_> {
             Product::Browser | Product::RenderBrowser => crate::browser::panel_contents(self.app, ui),
             Product::History if context.flow == Flow::Wide => crate::timeline::panel_inline(self.app, ui),
             Product::History => crate::timeline_left::panel_contents(self.app, ui),
+            #[cfg(any(test, feature = "legacy-embedded-assistant"))]
             Product::Assistant => crate::agent_chat::shared_content(self.app, ui),
+            #[cfg(not(any(test, feature = "legacy-embedded-assistant")))]
+            Product::Assistant => {}
         }
         let capture = ui.ctx().data_mut(|data| data.remove_temp::<Option<FocusCapture>>(focus_capture_id()).flatten());
         if context.document.as_ref().map(|document| document.0.as_str()) != Some(self.app.session.document_id.as_str()) {

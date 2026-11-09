@@ -407,7 +407,7 @@ mod native {
         };
         let Some(prepared) = pending.worker.as_mut().and_then(|worker| worker.prepared.as_mut()) else { return };
         let mut committed = false;
-        let mut result = crate::agent_chat::with_tool_request(app, chat_turn.as_ref(), |app| {
+        let mut result = crate::external_control::with_tool_request(app, chat_turn.as_ref(), |app| {
             solidcraft_engine::io::vfs::scoped(scope, || {
                 app.finish_render_preparation(command(kind), &pending.params, |session| {
                     let own = session.param_check;
@@ -964,7 +964,9 @@ mod native {
                 out
             };
             if app.session.uid == uid {
-                crate::agent_chat::with_tool_request(app, chat.as_ref(), |app| app.finish_render_preparation("render.batch", &Value::Null, finish))
+                crate::external_control::with_tool_request(app, chat.as_ref(), |app| {
+                    app.finish_render_preparation("render.batch", &Value::Null, finish)
+                })
             } else {
                 crate::documents::with_render_owner(app, uid, |session, view| {
                     let out = finish(session);
@@ -1370,7 +1372,7 @@ mod native {
         let level = echo.unwrap_or(app.session.param_check);
         let chat_turn = req.chat_turn.clone();
         let batch = id == Some("render.batch");
-        let result = crate::agent_chat::with_tool_request(app, chat_turn.as_ref(), |app| {
+        let result = crate::external_control::with_tool_request(app, chat_turn.as_ref(), |app| {
             if batch {
                 batches::begin(app, params, Origin::Control { request: req, echo }, scope, level)
             } else {

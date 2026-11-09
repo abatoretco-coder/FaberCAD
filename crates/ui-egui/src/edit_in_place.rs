@@ -205,7 +205,7 @@ pub(crate) fn command_ran(app: &mut SolveApp, result: &Value) -> Result<bool, St
     let ask = app.edit_in_place.ask;
     // Leaving the tab would stop the design's agent in the middle of its turn. Asked by that agent
     // (a command, which it sends during its turn), the part opens once the turn ends.
-    if app.agent_chat.state() == crate::agent_chat::State::Busy {
+    if crate::external_control::assistant_busy(app) {
         if ask {
             return Err(crate::i18n::tr("ui.edit_in_place_agent_busy").to_string());
         }
@@ -453,7 +453,7 @@ fn finish_with(app: &mut SolveApp, save: bool) -> Result<bool, String> {
     }
     // Leaving the tab would stop the part's agent in the middle of its turn. Asked by that agent
     // (a command, which it can only send during its turn), the edit finishes once the turn ends.
-    if app.agent_chat.state() == crate::agent_chat::State::Busy {
+    if crate::external_control::assistant_busy(app) {
         if save {
             return Err(crate::i18n::tr("ui.edit_in_place_agent_busy").to_string());
         }
@@ -516,7 +516,7 @@ pub(crate) fn tick(app: &mut SolveApp) {
     // The agent's turn ended: the finish it asked for goes on, as the command would have, in the
     // part's own tab (shown elsewhere, or edited differently since, it is dropped). What runs in
     // the design meanwhile (an undo, a file being written) is waited for, not a reason to drop it.
-    let after_turn = app.agent_chat.state() != crate::agent_chat::State::Busy && !busy(app);
+    let after_turn = !crate::external_control::assistant_busy(app) && !busy(app);
     if after_turn
         && let Some(part) = app.edit_in_place.finish_after_turn.take()
         && app.edit_in_place.active.as_ref().is_some_and(|c| crate::documents::same_path(&c.part, &part))

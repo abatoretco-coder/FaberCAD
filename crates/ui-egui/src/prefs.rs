@@ -1601,12 +1601,12 @@ preference_settings! {
     /// Let AI agents connect: the localhost control channel (MCP) opens on the default port at
     /// start-up, unless `--control`/`SOLIDCRAFT_CONTROL_PORT` name one. Read at start-up.
     agent_control: bool = true, PAGE_ASSISTANT;
-    /// Add SolidCraft's MCP server to the AI apps installed on this computer at start-up
-    /// ([`crate::ai_connect`]); off takes the entries out again.
+    /// Historical automatic client-configuration setting, retained for saved preferences.
+    /// FABER's external MCP control does not register or remove other apps' configurations.
     connect_ai_apps: bool = false, PAGE_ASSISTANT;
     /// Agents the user added (the installed ones are found by themselves). API keys are never
     /// here: they live in the system keychain.
-    agents: Vec<crate::agent_chat::agents::AgentConfig> = Vec::new();
+    agents: Vec<crate::agent_preferences::AgentConfig> = Vec::new();
     /// The agent a new conversation starts with (an agent's id; empty: the first one available).
     agent_default: String = String::new();
     /// The agent the chat last started (an agent's id; empty: none yet).
@@ -1617,8 +1617,8 @@ preference_settings! {
     agent_connect_at_start: bool = false, PAGE_ASSISTANT;
     agent_chat_open_at_start: bool = false, PAGE_ASSISTANT;
     /// How much the agent may do without asking (`ask`, `edits`, `all`), and per agent.
-    ai_permissions: crate::agent_chat::agents::Mode = crate::agent_chat::agents::Mode::Edits, PAGE_ASSISTANT;
-    agent_permissions: std::collections::BTreeMap<String, crate::agent_chat::agents::Mode> = Default::default(), PAGE_ASSISTANT;
+    ai_permissions: crate::agent_preferences::Mode = crate::agent_preferences::Mode::Edits, PAGE_ASSISTANT;
+    agent_permissions: std::collections::BTreeMap<String, crate::agent_preferences::Mode> = Default::default(), PAGE_ASSISTANT;
     /// The model last chosen in the chat, per agent: put back when the agent offers it again.
     agent_models: std::collections::BTreeMap<String, String> = Default::default();
     /// "Always allow" answers: per agent, the tools it may use without asking.
@@ -1633,7 +1633,7 @@ preference_settings! {
     agent_chat_popped: bool = false, PAGE_ASSISTANT;
     agent_chat_window: Option<[f32; 4]> = None, PAGE_ASSISTANT;
     /// Changes the agent may make for one message; 0 is no limit.
-    agent_chat_turn_limit: u32 = crate::agent_chat::gate::DEFAULT_TURN_LIMIT, PAGE_ASSISTANT;
+    agent_chat_turn_limit: u32 = crate::agent_preferences::DEFAULT_TURN_LIMIT, PAGE_ASSISTANT;
     /// Custom instructions (#8220): text the agent chat adds to its system note when a session
     /// starts (`agent_chat::acp::system_note`). No page reset discards this user-authored text.
     agent_instructions: String = String::new();
@@ -2989,6 +2989,7 @@ fn draw_page(app: &mut SolveApp, ui: &mut egui::Ui, index: usize, t: &Tokens) {
                 ui_kit::settings_page(ui, show);
             }
         }
+        #[cfg(any(test, feature = "legacy-embedded-assistant"))]
         PAGE_ASSISTANT if crate::external_control::EMBEDDED_ASSISTANT => crate::agent_chat::settings::page(app, ui),
         PAGE_ASSISTANT => crate::external_control::page(app, ui),
         PAGE_PLUGINS => crate::plugins::page(app, ui),
@@ -3971,7 +3972,7 @@ fn theme_file(app: &SolveApp, id: &str, system_dark: bool) -> serde_json::Value 
 pub fn migrate(mut p: Prefs) -> Prefs {
     migrate_gruvbox(&mut p);
     // Every saved file carries the old default limit; it reads as no limit.
-    if p.agent_chat_turn_limit == crate::agent_chat::gate::OLD_DEFAULT_TURN_LIMIT {
+    if p.agent_chat_turn_limit == crate::agent_preferences::OLD_DEFAULT_TURN_LIMIT {
         p.agent_chat_turn_limit = 0;
     }
     let valid_resource = |(kind, id): &(String, String)| !kind.is_empty() && kind.len() <= 64 && !id.is_empty() && id.len() <= 4096;
@@ -11103,6 +11104,26 @@ mod tests {
         assert_eq!(Prefs::default().agent_chat_turn_limit, 0);
         assert_eq!(migrate(lenient(&json!({"agent_chat_turn_limit": 24}))).agent_chat_turn_limit, 0, "the old default reads as no limit");
         assert_eq!(lenient(&json!({"agent_chat_turn_limit": 10})).agent_chat_turn_limit, 10);
+    }
+
+    #[test]
+    fn legacy_assistant_preferences_round_trip_without_changing_external_control() {
+        let saved = json!({
+            "agents":[{"id":"old-local","name":"Local model","kind":"api","command":"",
+                "base_url":"http://127.0.0.1:11434/v1","model":"saved-model","ollama":true,
+                "key":true,"allow_insecure_http":true,"request_timeout_s":90,"reasoning_effort":"low"}],
+            "ai_permissions":"ask","agent_permissions":{"old-local":"all"},
+            "agent_control":false,"agent_chat_side":"left","agent_chat_width":420.0,
+            "agent_chat_turn_limit":10
+        });
+        let loaded = migrate(lenient(&saved));
+        let round_trip = serde_json::to_value(&loaded).unwrap();
+        for key in ["agents", "ai_permissions", "agent_permissions", "agent_control", "agent_chat_side", "agent_chat_width", "agent_chat_turn_limit"]
+        {
+            assert_eq!(round_trip[key], saved[key], "saved field {key}");
+        }
+        assert!(!loaded.agent_control);
+        assert!(loaded.agents[0].key, "a saved credential reference is data, not credential access");
     }
 
     #[test]

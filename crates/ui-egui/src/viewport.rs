@@ -7240,6 +7240,7 @@ pub(crate) fn refresh_layout(app: &mut SolveApp, ctx: &egui::Context) {
         }
         // The full-height Assistant reserves control space, while rendering and picking
         // keep the original viewport projection. Ordinary feature dialogs do not move controls.
+        #[cfg(any(test, feature = "legacy-embedded-assistant"))]
         if app.ui.layout == crate::shell::LayoutMode::Floating
             && crate::agent_chat::shown(app)
             && app.agent_chat.open

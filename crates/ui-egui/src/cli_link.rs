@@ -5,6 +5,62 @@
 
 use std::path::{Path, PathBuf};
 
+/// Find the external MCP CLI without loading the embedded assistant implementation.
+#[cfg(not(target_arch = "wasm32"))]
+pub fn find_cli() -> Option<PathBuf> {
+    let name = if cfg!(windows) { "solidcraft-cli.exe" } else { "solidcraft-cli" };
+    if let Some(path) = solidcraft_engine::geom::env::var("CLI").map(PathBuf::from).filter(|path| path.is_file()) {
+        return Some(path);
+    }
+    std::env::current_exe().ok().and_then(|exe| exe.parent().map(|directory| directory.join(name))).filter(|path| path.is_file()).or_else(|| {
+        let names = if cfg!(windows) { vec!["solidcraft-cli.exe", "solidcraft-cli.cmd", "solidcraft-cli.bat"] } else { vec!["solidcraft-cli"] };
+        search_dirs().iter().flat_map(|directory| names.iter().map(move |name| directory.join(name))).find(|path| path.is_file())
+    })
+}
+
+/// PATH, then the usual places npm, Homebrew, nvm, Volta, bun, pipx and Grok put commands, and on
+/// Windows Node's own install folders: a launcher can start SolidCraft with a PATH that lacks
+/// them, and an npm agent's `.cmd` shim then can't find `node` (#9297).
+pub fn search_dirs() -> Vec<PathBuf> {
+    search_dirs_in(&|name| std::env::var_os(name), cfg!(windows))
+}
+
+/// [`search_dirs`] in the environment `var` reads, on Windows or not.
+pub(crate) fn search_dirs_in(var: &dyn Fn(&str) -> Option<std::ffi::OsString>, windows: bool) -> Vec<PathBuf> {
+    let mut dirs: Vec<PathBuf> = var("PATH").map(|p| std::env::split_paths(&p).collect()).unwrap_or_default();
+    if let Some(prefix) = var("NPM_CONFIG_PREFIX").map(PathBuf::from) {
+        dirs.push(if windows { prefix.clone() } else { prefix.join("bin") });
+    }
+    if let Some(h) = var(if windows { "USERPROFILE" } else { "HOME" }).map(PathBuf::from).filter(|p| p.is_absolute()) {
+        for d in [".local/bin", ".npm-global/bin", ".npm-packages/bin", ".volta/bin", ".bun/bin", ".cargo/bin", ".grok/bin", "bin"] {
+            dirs.push(h.join(d));
+        }
+        // nvm: every installed Node version's bin.
+        if let Ok(rd) = std::fs::read_dir(h.join(".nvm/versions/node")) {
+            let mut v: Vec<PathBuf> = rd.flatten().take(64).map(|e| e.path().join("bin")).collect();
+            v.sort();
+            dirs.extend(v.into_iter().rev());
+        }
+    }
+    if windows {
+        if let Some(a) = var("APPDATA") {
+            dirs.push(PathBuf::from(a).join("npm"));
+        }
+        // Node's installers (64-bit and 32-bit), and nvm-windows' link to the version in use.
+        for program_files in ["ProgramFiles", "ProgramFiles(x86)"] {
+            dirs.extend(var(program_files).map(|d| PathBuf::from(d).join("nodejs")));
+        }
+        dirs.extend(var("NVM_SYMLINK").map(PathBuf::from));
+    } else {
+        for d in ["/opt/homebrew/bin", "/usr/local/bin", "/home/linuxbrew/.linuxbrew/bin", "/usr/bin"] {
+            dirs.push(PathBuf::from(d));
+        }
+    }
+    let mut seen = std::collections::HashSet::new();
+    dirs.retain(|d| d.is_absolute() && seen.insert(d.clone()));
+    dirs
+}
+
 /// What a link's place holds now.
 #[derive(Debug, PartialEq)]
 pub enum Slot {
@@ -144,6 +200,37 @@ mod tests {
     use super::*;
 
     const CLI: &str = "/Applications/SolidCraft.app/Contents/MacOS/solidcraft-cli";
+
+    #[test]
+    fn external_cli_search_keeps_path_priority_and_ignores_relative_duplicates() {
+        let first = std::env::temp_dir().join("faber-cli-path-first");
+        let path = std::env::join_paths([first.as_path(), Path::new("relative"), first.as_path()]).unwrap();
+        let dirs = search_dirs_in(&|name| (name == "PATH").then(|| path.clone()), true);
+        assert_eq!(dirs, [first]);
+    }
+
+    #[test]
+    fn external_cli_override_does_not_need_the_chat_module() {
+        const CHILD: &str = "FABER_CLI_LOOKUP_TEST_CHILD";
+        if let Some(expected) = std::env::var_os(CHILD) {
+            assert_eq!(find_cli(), Some(PathBuf::from(expected)));
+            return;
+        }
+        let nonce = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos();
+        let directory = std::env::temp_dir().join(format!("faber-cli-lookup-{}-{nonce}", std::process::id()));
+        std::fs::create_dir(&directory).unwrap();
+        let candidate = directory.join(if cfg!(windows) { "solidcraft-cli.exe" } else { "solidcraft-cli" });
+        std::fs::write(&candidate, "lookup only; never executed").unwrap();
+        let result = std::process::Command::new(std::env::current_exe().unwrap())
+            .args(["--exact", "cli_link::tests::external_cli_override_does_not_need_the_chat_module"])
+            .env(CHILD, &candidate)
+            .env("CLI", &candidate)
+            .output()
+            .unwrap();
+        std::fs::remove_file(candidate).unwrap();
+        std::fs::remove_dir(directory).unwrap();
+        assert!(result.status.success(), "{}", String::from_utf8_lossy(&result.stdout));
+    }
 
     #[test]
     fn plans() {

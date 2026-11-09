@@ -1,16 +1,20 @@
 use super::*;
 
 /// A 10 × 20 × 30 mm box called "Block", saved by FreeCAD 1.1.4 (`fixtures/make_block_fcstd.py`).
+#[cfg(feature = "foreign-cad-import")]
 const BLOCK_FCSTD: &[u8] = include_bytes!("fixtures/block.FCStd");
 
 /// The same box as a Rhino 7 file, written with McNeel's MIT-licensed rhino3dm package
 /// (`fixtures/make_block_3dm.py`).
+#[cfg(feature = "foreign-cad-import")]
 const BLOCK_3DM: &[u8] = include_bytes!("fixtures/block.3dm");
 
 /// STEP text, which these importers refuse.
+#[cfg(feature = "foreign-cad-import")]
 const STEP_TEXT: &str = "ISO-10303-21;\nHEADER;\nENDSEC;\nDATA;\nENDSEC;\nEND-ISO-10303-21;\n";
 
 /// The file imports as one solid with the box's volume, through the same Import feature as STEP.
+#[cfg(feature = "foreign-cad-import")]
 fn imports_the_block(bytes: &[u8], file: &str) {
     let step = native_cad_to_step(bytes, file).unwrap().0;
     assert!(step.contains("MANIFOLD_SOLID_BREP"), "{file}: no solid in the restated STEP");
@@ -37,6 +41,7 @@ fn extensions() {
 }
 
 #[test]
+#[cfg(feature = "foreign-cad-import")]
 fn freecad_box_imports_as_a_solid() {
     let bytes = BLOCK_FCSTD;
     assert!(bytes.starts_with(b"PK"), "an FCStd file is a ZIP archive");
@@ -44,6 +49,7 @@ fn freecad_box_imports_as_a_solid() {
 }
 
 #[test]
+#[cfg(feature = "foreign-cad-import")]
 fn rhino_box_imports_as_a_solid() {
     let bytes = BLOCK_3DM;
     assert!(bytes.starts_with(b"3D Geometry File Format"), "a 3dm file starts with its signature");
@@ -53,6 +59,7 @@ fn rhino_box_imports_as_a_solid() {
 /// Only FreeCAD and Rhino contents are read: STEP text, garbage, a bad ZIP and empty input are
 /// refused with a message, as are ACIS, ShapeManager and commercial formats whatever their bytes.
 #[test]
+#[cfg(feature = "foreign-cad-import")]
 fn other_contents_are_refused() {
     let step = STEP_TEXT;
     let fcstd = BLOCK_FCSTD;
@@ -78,6 +85,7 @@ fn other_contents_are_refused() {
 /// Truncated, bit-flipped and garbage-tailed variants of valid FreeCAD and Rhino files give an
 /// error or a solid, never a panic.
 #[test]
+#[cfg(feature = "foreign-cad-import")]
 fn hostile_native_cad_never_panics() {
     for (good, name) in [(BLOCK_FCSTD, "hostile.FCStd"), (BLOCK_3DM, "hostile.3dm")] {
         let mut cases: Vec<Vec<u8>> = (0..good.len()).step_by((good.len() / 60).max(1)).map(|n| good[..n].to_vec()).collect();
@@ -104,6 +112,7 @@ fn hostile_native_cad_never_panics() {
 /// cadmpeg (since 0.6.3) has no work-unit or collection-item budgets, and its service profile already
 /// admits the 8 million entities a detailed part needed (#1783).
 #[test]
+#[cfg(feature = "foreign-cad-import")]
 fn decoding_is_capped() {
     let limits = convert::policy().limits;
     let service = cadmpeg_core::decode::ResourceLimits::service();
@@ -115,6 +124,7 @@ fn decoding_is_capped() {
 /// A FreeCAD archive whose Document.xml inflates past the per-entry cap (a ZIP bomb, 300 MB of
 /// zeros in a few hundred KB) is refused.
 #[test]
+#[cfg(feature = "foreign-cad-import")]
 fn a_zip_bomb_is_refused() {
     use std::io::Write;
     let mut zip = zip::ZipWriter::new(std::io::Cursor::new(Vec::new()));
@@ -126,4 +136,18 @@ fn a_zip_bomb_is_refused() {
     let bytes = zip.finish().unwrap().into_inner();
     assert!(bytes.len() < 2 << 20, "{} bytes", bytes.len());
     assert!(native_cad_to_step(&bytes, "bomb.FCStd").is_err());
+}
+
+#[cfg(not(feature = "foreign-cad-import"))]
+#[test]
+fn unavailable_decoder_refuses_without_treating_foreign_files_as_step() {
+    for name in ["part.FCStd", "part.3DM"] {
+        assert!(is_native_cad_path(name));
+        assert!(crate::is_step_path(name), "route to the explicit unavailable decoder");
+        for bytes in [b"".as_slice(), b"not STEP".as_slice()] {
+            let error = crate::step_import_feature(bytes, name).err().expect(name).to_string();
+            assert!(error.contains("unavailable in this build"), "{error}");
+            assert!(error.contains("STEP") && error.contains(".sc"), "{error}");
+        }
+    }
 }

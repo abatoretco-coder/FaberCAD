@@ -219,48 +219,10 @@ fn home() -> Option<PathBuf> {
     std::env::var_os(if cfg!(windows) { "USERPROFILE" } else { "HOME" }).map(PathBuf::from).filter(|p| p.is_absolute())
 }
 
-/// PATH, then the usual places npm, Homebrew, nvm, Volta, bun, pipx and Grok put commands, and on
-/// Windows Node's own install folders: a launcher can start SolidCraft with a PATH that lacks
-/// them, and an npm agent's `.cmd` shim then can't find `node` (#9297).
-pub fn search_dirs() -> Vec<PathBuf> {
-    search_dirs_in(&|name| std::env::var_os(name), cfg!(windows))
-}
-
-/// [`search_dirs`] in the environment `var` reads, on Windows or not.
-fn search_dirs_in(var: &dyn Fn(&str) -> Option<OsString>, windows: bool) -> Vec<PathBuf> {
-    let mut dirs: Vec<PathBuf> = var("PATH").map(|p| std::env::split_paths(&p).collect()).unwrap_or_default();
-    if let Some(prefix) = var("NPM_CONFIG_PREFIX").map(PathBuf::from) {
-        dirs.push(if windows { prefix.clone() } else { prefix.join("bin") });
-    }
-    if let Some(h) = var(if windows { "USERPROFILE" } else { "HOME" }).map(PathBuf::from).filter(|p| p.is_absolute()) {
-        for d in [".local/bin", ".npm-global/bin", ".npm-packages/bin", ".volta/bin", ".bun/bin", ".cargo/bin", ".grok/bin", "bin"] {
-            dirs.push(h.join(d));
-        }
-        // nvm: every installed Node version's bin.
-        if let Ok(rd) = std::fs::read_dir(h.join(".nvm/versions/node")) {
-            let mut v: Vec<PathBuf> = rd.flatten().take(64).map(|e| e.path().join("bin")).collect();
-            v.sort();
-            dirs.extend(v.into_iter().rev());
-        }
-    }
-    if windows {
-        if let Some(a) = var("APPDATA") {
-            dirs.push(PathBuf::from(a).join("npm"));
-        }
-        // Node's installers (64-bit and 32-bit), and nvm-windows' link to the version in use.
-        for program_files in ["ProgramFiles", "ProgramFiles(x86)"] {
-            dirs.extend(var(program_files).map(|d| PathBuf::from(d).join("nodejs")));
-        }
-        dirs.extend(var("NVM_SYMLINK").map(PathBuf::from));
-    } else {
-        for d in ["/opt/homebrew/bin", "/usr/local/bin", "/home/linuxbrew/.linuxbrew/bin", "/usr/bin"] {
-            dirs.push(PathBuf::from(d));
-        }
-    }
-    let mut seen = std::collections::HashSet::new();
-    dirs.retain(|d| d.is_absolute() && seen.insert(d.clone()));
-    dirs
-}
+// CLI and ACP discovery share only plain path lookup; MCP does not depend on chat.
+pub use crate::cli_link::search_dirs;
+#[cfg(test)]
+use crate::cli_link::search_dirs_in;
 
 /// The first `program` in `dirs` (on Windows with `.exe`/`.cmd`/`.bat`).
 pub fn find_in(program: &str, dirs: &[PathBuf]) -> Option<PathBuf> {

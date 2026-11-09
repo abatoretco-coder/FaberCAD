@@ -13,6 +13,10 @@
 /// File extensions read through cadmpeg (lower case).
 pub const NATIVE_CAD_EXTS: [&str; 2] = ["fcstd", "3dm"];
 
+/// Whether this build includes secondary CAD decoders. Recognition stays available
+/// even without them, so disabled formats cannot fall through to the STEP parser.
+pub const NATIVE_CAD_IMPORT_AVAILABLE: bool = cfg!(feature = "foreign-cad-import");
+
 /// Is this a FreeCAD or Rhino file name (any case)?
 pub fn is_native_cad_path(path: &str) -> bool {
     std::path::Path::new(path).extension().and_then(|e| e.to_str()).is_some_and(|e| NATIVE_CAD_EXTS.iter().any(|x| e.eq_ignore_ascii_case(x)))
@@ -20,6 +24,7 @@ pub fn is_native_cad_path(path: &str) -> bool {
 
 /// Restate a FreeCAD or Rhino file (`file` is its name) as STEP text, with the losses
 /// and warnings cadmpeg reported. Panics inside cadmpeg become errors.
+#[cfg(feature = "foreign-cad-import")]
 pub fn native_cad_to_step(bytes: &[u8], file: &str) -> Result<(String, Vec<String>), String> {
     let name = std::path::Path::new(file).file_name().map(|s| s.to_string_lossy().to_string()).unwrap_or_else(|| file.to_string());
     solidcraft_kernel::guard("cadmpeg import", || convert::to_step(&name, bytes).map_err(solidcraft_kernel::KernelError::Invalid)).map_err(
@@ -30,6 +35,13 @@ pub fn native_cad_to_step(bytes: &[u8], file: &str) -> Result<(String, Vec<Strin
     )
 }
 
+/// An unavailable decoder must fail explicitly without parsing or changing a design.
+#[cfg(not(feature = "foreign-cad-import"))]
+pub fn native_cad_to_step(_bytes: &[u8], _file: &str) -> Result<(String, Vec<String>), String> {
+    Err("Secondary CAD import (.FCStd/.3dm) is unavailable in this build; use STEP or a native .sc design.".into())
+}
+
+#[cfg(feature = "foreign-cad-import")]
 mod convert {
     use std::io::Cursor;
 
@@ -135,6 +147,7 @@ mod convert {
 
 /// cadmpeg's STEP writer calls a product it has no name for `cadmpeg_model`; name it after the
 /// file instead (as plain STEP text: letters, digits, spaces, `-`, `_` and `.` only).
+#[cfg(feature = "foreign-cad-import")]
 fn name_unnamed_products(step: String, file: &str) -> String {
     const PLACEHOLDER: &str = "'cadmpeg_model'";
     let stem: String = std::path::Path::new(file)

@@ -1,4 +1,8 @@
-# SolidCraft roadmap
+# SolidCraft upstream roadmap (reference)
+
+This inherited roadmap is not the FABER delivery plan or a record of qualified
+FABER features. Use [FABER documentation](docs/faber/README.md) and
+[product scope](docs/faber/SCOPE.md) for the active product.
 
 The short version, for people who use SolidCraft. The detailed developer status (milestone
 tables, limitations, measurements) is in [docs/roadmap-detail.md](docs/roadmap-detail.md).

@@ -18,24 +18,29 @@ fn file(tag: &str, name: &str, bytes: &[u8]) -> (std::path::PathBuf, String) {
     (dir, path.to_string_lossy().to_string())
 }
 
+#[cfg(feature = "foreign-cad-import")]
 fn extent(s: &Session) -> ([f64; 3], [f64; 3]) {
     let b = crate::view::bounds(s).unwrap();
     ([b.min.x, b.min.y, b.min.z], [b.max.x, b.max.y, b.max.z])
 }
 
+#[cfg(feature = "foreign-cad-import")]
 fn near(a: [f64; 3], b: [f64; 3]) -> bool {
     a.iter().zip(&b).all(|(x, y)| (x - y).abs() < 1e-6)
 }
 
+#[cfg(feature = "foreign-cad-import")]
 fn volume(s: &mut Session) -> f64 {
     run(s, "inspect.measure", json!({}))["total"]["volume_mm3"].as_f64().unwrap()
 }
 
+#[cfg(feature = "foreign-cad-import")]
 fn body_names(s: &Session) -> Vec<String> {
     s.model.state().bodies.iter().map(|b| b.name.clone()).collect()
 }
 
 #[test]
+#[cfg(feature = "foreign-cad-import")]
 fn freecad_and_rhino_files_come_in_as_a_component_named_after_the_file() {
     for (tag, name, bytes) in [("fc", "block.FCStd", BLOCK_FCSTD), ("rh", "block.3dm", BLOCK_3DM)] {
         let (dir, path) = file(tag, name, bytes);
@@ -90,5 +95,47 @@ fn a_broken_freecad_or_rhino_file_is_refused_cleanly() {
         assert!(!e.contains("internal"), "{name}: a clean error, not a caught panic: {e}");
         assert_eq!(s.doc, before, "{name}: the design is unchanged");
         let _ = std::fs::remove_dir_all(&dir);
+    }
+}
+
+#[cfg(not(feature = "foreign-cad-import"))]
+#[test]
+fn disabled_secondary_import_preserves_the_existing_document() {
+    // Cargo can unify IO's feature from another selected package independently of engine's.
+    if solidcraft_io::NATIVE_CAD_IMPORT_AVAILABLE {
+        return;
+    }
+    for (tag, name, bytes) in [("off-fc", "block.FCStd", BLOCK_FCSTD), ("off-rh", "block.3dm", BLOCK_3DM)] {
+        let (dir, path) = file(tag, name, bytes);
+        for command in ["doc.open", "file.insert_step"] {
+            let mut session = Session::default();
+            run(&mut session, "solid.box", json!({"length": 5, "width": 5, "height": 5}));
+            let before = session.doc.clone();
+            let error = session.execute(command, &json!({"path": path})).expect_err(command).to_string();
+            assert!(error.contains("unavailable in this build"), "{command}: {error}");
+            assert_eq!(session.doc, before, "{command}: existing geometry and history must remain intact");
+        }
+        let _ = std::fs::remove_dir_all(dir);
+    }
+}
+
+#[cfg(not(feature = "foreign-cad-import"))]
+#[test]
+fn disabled_secondary_import_is_refused_before_file_access() {
+    if solidcraft_io::NATIVE_CAD_IMPORT_AVAILABLE {
+        return;
+    }
+    for extension in ["FCStd", "3dm"] {
+        let path = std::env::temp_dir().join(format!("faber-disabled-import-no-file-{}.{}", std::process::id(), extension));
+        assert!(!path.exists(), "the missing-file fixture must not exist");
+        for command in ["doc.open", "file.insert_step"] {
+            let mut session = Session::default();
+            run(&mut session, "solid.box", json!({"length": 5, "width": 5, "height": 5}));
+            let before = session.doc.clone();
+            let error = session.execute(command, &json!({"path": path})).expect_err(command).to_string();
+            assert!(error.contains("unavailable in this build"), "must fail on decoder capability before file-not-found: {error}");
+            assert_eq!(session.doc, before);
+        }
+        assert!(!path.exists(), "refusing an import must not create a file");
     }
 }

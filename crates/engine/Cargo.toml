@@ -10,6 +10,7 @@ workspace = true
 
 [features]
 default = []
+foreign-cad-import = ["solidcraft-io/foreign-cad-import"]
 # Optional authored texture/HDR bytes; the command registry and metadata remain available.
 bundled-render-library = []
 raytrace-cpu = ["solidcraft-render/raytrace-cpu"]

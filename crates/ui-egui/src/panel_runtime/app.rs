@@ -1085,6 +1085,7 @@ impl crate::SolveApp {
         crate::timeline::follow_view_pick(self);
         crate::render_ui::focus_shortcut(self, ui);
         crate::dialogs::sync_feature_edit(self);
+        #[cfg(any(test, feature = "legacy-embedded-assistant"))]
         if cfg!(not(target_arch = "wasm32")) && self.preferences.agent_chat_popped {
             // Keep the previous embedded-window rect for hover shortcuts.
             // `show` owns geometry/lifecycle and also polls in this path.
@@ -1227,6 +1228,7 @@ impl crate::SolveApp {
                     self.panel_runtime = Some(integration);
                 }
             });
+        #[cfg(any(test, feature = "legacy-embedded-assistant"))]
         if self.panel_runtime.as_ref().is_some_and(|integration| integration.production.is_some()) && !self.preferences.agent_chat_popped {
             crate::agent_chat::finish_shared(self, ui.ctx());
         }

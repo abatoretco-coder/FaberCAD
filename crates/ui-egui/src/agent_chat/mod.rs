@@ -952,15 +952,7 @@ pub(crate) fn assistant_tip(app: &SolveApp, mark: AssistantMark) -> String {
 /// `solidcraft-cli` next to this program, else on the search path.
 #[cfg(not(target_arch = "wasm32"))]
 pub(crate) fn find_cli() -> Option<std::path::PathBuf> {
-    let name = if cfg!(windows) { "solidcraft-cli.exe" } else { "solidcraft-cli" };
-    if let Some(p) = solidcraft_engine::geom::env::var("CLI").map(std::path::PathBuf::from).filter(|p| p.is_file()) {
-        return Some(p);
-    }
-    std::env::current_exe()
-        .ok()
-        .and_then(|e| e.parent().map(|d| d.join(name)))
-        .filter(|p| p.is_file())
-        .or_else(|| discover::find_in("solidcraft-cli", &discover::search_dirs()))
+    crate::cli_link::find_cli()
 }
 
 /// The agent's working folder: an empty folder of SolidCraft's own, so an agent's own file tools

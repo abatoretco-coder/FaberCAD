@@ -1,0 +1,527 @@
+{
+  "commands": [
+    {
+      "command": "file.new",
+      "params": {
+        "name": "FABER woodworking and furniture reference"
+      }
+    },
+    {
+      "command": "component.activate",
+      "params": {
+        "component": "root"
+      }
+    },
+    {
+      "command": "component.create",
+      "params": {
+        "name": "Lower",
+        "grounded": true
+      }
+    },
+    {
+      "command": "solid.box",
+      "params": {
+        "body_name": "Lower",
+        "corner": [
+          0,
+          0,
+          0
+        ],
+        "length": 300,
+        "width": 100,
+        "height": 18
+      }
+    },
+    {
+      "command": "component.metadata.set",
+      "params": {
+        "component": "Lower",
+        "properties": {
+          "grain_axis": "length",
+          "stock_length_mm": "300",
+          "stock_width_mm": "100",
+          "stock_thickness_mm": "18",
+          "geometry_provenance": "procedural_reference_fixture"
+        }
+      }
+    },
+    {
+      "command": "solid.cylinder",
+      "params": {
+        "radius": 3.1,
+        "height": 8.01,
+        "base": [
+          100,
+          50,
+          18.01
+        ],
+        "axis": [
+          0,
+          0,
+          -1
+        ],
+        "operation": "cut",
+        "targets": [
+          "Lower"
+        ]
+      }
+    },
+    {
+      "command": "solid.cylinder",
+      "params": {
+        "radius": 3.1,
+        "height": 8.01,
+        "base": [
+          200,
+          50,
+          18.01
+        ],
+        "axis": [
+          0,
+          0,
+          -1
+        ],
+        "operation": "cut",
+        "targets": [
+          "Lower"
+        ]
+      }
+    },
+    {
+      "command": "component.activate",
+      "params": {
+        "component": "root"
+      }
+    },
+    {
+      "command": "component.activate",
+      "params": {
+        "component": "root"
+      }
+    },
+    {
+      "command": "component.create",
+      "params": {
+        "name": "Upper",
+        "grounded": true
+      }
+    },
+    {
+      "command": "solid.box",
+      "params": {
+        "body_name": "Upper",
+        "corner": [
+          0,
+          0,
+          18
+        ],
+        "length": 300,
+        "width": 100,
+        "height": 18
+      }
+    },
+    {
+      "command": "component.metadata.set",
+      "params": {
+        "component": "Upper",
+        "properties": {
+          "grain_axis": "length",
+          "stock_length_mm": "300",
+          "stock_width_mm": "100",
+          "stock_thickness_mm": "18",
+          "geometry_provenance": "procedural_reference_fixture"
+        }
+      }
+    },
+    {
+      "command": "solid.cylinder",
+      "params": {
+        "radius": 3.1,
+        "height": 8.01,
+        "base": [
+          100,
+          50,
+          17.99
+        ],
+        "axis": [
+          0,
+          0,
+          1
+        ],
+        "operation": "cut",
+        "targets": [
+          "Upper"
+        ]
+      }
+    },
+    {
+      "command": "solid.cylinder",
+      "params": {
+        "radius": 3.1,
+        "height": 8.01,
+        "base": [
+          200,
+          50,
+          17.99
+        ],
+        "axis": [
+          0,
+          0,
+          1
+        ],
+        "operation": "cut",
+        "targets": [
+          "Upper"
+        ]
+      }
+    },
+    {
+      "command": "component.activate",
+      "params": {
+        "component": "root"
+      }
+    },
+    {
+      "command": "workshop.material",
+      "params": {
+        "material": "pine",
+        "bodies": [
+          "Lower",
+          "Upper"
+        ]
+      }
+    },
+    {
+      "command": "material.create",
+      "params": {
+        "name": "Reference generic steel",
+        "density_g_cm3": 7.85,
+        "color": "#9CA3AF"
+      }
+    },
+    {
+      "command": "component.activate",
+      "params": {
+        "component": "root"
+      }
+    },
+    {
+      "command": "component.create",
+      "params": {
+        "name": "Hinge fixed",
+        "grounded": true
+      }
+    },
+    {
+      "command": "solid.box",
+      "params": {
+        "body_name": "Hinge fixed",
+        "corner": [
+          380,
+          -1,
+          0
+        ],
+        "length": 20,
+        "width": 2,
+        "height": 60
+      }
+    },
+    {
+      "command": "solid.cylinder",
+      "params": {
+        "base": [
+          400,
+          0,
+          0
+        ],
+        "radius": 3,
+        "height": 60,
+        "operation": "join",
+        "targets": [
+          "Hinge fixed"
+        ]
+      }
+    },
+    {
+      "command": "material.assign",
+      "params": {
+        "bodies": [
+          "Hinge fixed"
+        ],
+        "material": "Reference generic steel"
+      }
+    },
+    {
+      "command": "component.metadata.set",
+      "params": {
+        "component": "Hinge fixed",
+        "properties": {
+          "geometry_provenance": "envelope_proxy",
+          "geometry_source": "FABER original reference recipe",
+          "units": "mm",
+          "limitations": "No manufacturer CAD, mounting pattern or load rating"
+        }
+      }
+    },
+    {
+      "command": "component.activate",
+      "params": {
+        "component": "root"
+      }
+    },
+    {
+      "command": "component.create",
+      "params": {
+        "name": "Hinge moving",
+        "grounded": false
+      }
+    },
+    {
+      "command": "solid.box",
+      "params": {
+        "body_name": "Hinge moving",
+        "corner": [
+          403.5,
+          -1,
+          0
+        ],
+        "length": 16.5,
+        "width": 2,
+        "height": 60
+      }
+    },
+    {
+      "command": "material.assign",
+      "params": {
+        "bodies": [
+          "Hinge moving"
+        ],
+        "material": "Reference generic steel"
+      }
+    },
+    {
+      "command": "component.metadata.set",
+      "params": {
+        "component": "Hinge moving",
+        "properties": {
+          "geometry_provenance": "envelope_proxy",
+          "geometry_source": "FABER original reference recipe",
+          "units": "mm",
+          "limitations": "No manufacturer CAD, mounting pattern or load rating"
+        }
+      }
+    },
+    {
+      "command": "component.activate",
+      "params": {
+        "component": "root"
+      }
+    },
+    {
+      "command": "component.create",
+      "params": {
+        "name": "Slide fixed",
+        "grounded": true
+      }
+    },
+    {
+      "command": "solid.box",
+      "params": {
+        "body_name": "Slide fixed",
+        "corner": [
+          0,
+          150,
+          0
+        ],
+        "length": 400,
+        "width": 9.75,
+        "height": 10
+      }
+    },
+    {
+      "command": "material.assign",
+      "params": {
+        "bodies": [
+          "Slide fixed"
+        ],
+        "material": "Reference generic steel"
+      }
+    },
+    {
+      "command": "component.metadata.set",
+      "params": {
+        "component": "Slide fixed",
+        "properties": {
+          "geometry_provenance": "envelope_proxy",
+          "geometry_source": "FABER original reference recipe",
+          "units": "mm",
+          "limitations": "No manufacturer CAD, mounting pattern or load rating"
+        }
+      }
+    },
+    {
+      "command": "component.activate",
+      "params": {
+        "component": "root"
+      }
+    },
+    {
+      "command": "component.create",
+      "params": {
+        "name": "Slide moving",
+        "grounded": false
+      }
+    },
+    {
+      "command": "solid.box",
+      "params": {
+        "body_name": "Slide moving",
+        "corner": [
+          0,
+          160.25,
+          0
+        ],
+        "length": 400,
+        "width": 9.75,
+        "height": 10
+      }
+    },
+    {
+      "command": "material.assign",
+      "params": {
+        "bodies": [
+          "Slide moving"
+        ],
+        "material": "Reference generic steel"
+      }
+    },
+    {
+      "command": "component.metadata.set",
+      "params": {
+        "component": "Slide moving",
+        "properties": {
+          "geometry_provenance": "envelope_proxy",
+          "geometry_source": "FABER original reference recipe",
+          "units": "mm",
+          "limitations": "No manufacturer CAD, mounting pattern or load rating"
+        }
+      }
+    },
+    {
+      "command": "component.activate",
+      "params": {
+        "component": "root"
+      }
+    },
+    {
+      "command": "joint.as_built",
+      "params": {
+        "name": "Hinge motion",
+        "type": "revolute",
+        "a": "Hinge fixed",
+        "b": "Hinge moving",
+        "at": {
+          "occurrence": "Hinge fixed",
+          "point": [
+            400,
+            0,
+            0
+          ],
+          "z": [
+            0,
+            0,
+            1
+          ]
+        },
+        "limits": [
+          [
+            0,
+            110
+          ]
+        ],
+        "quiet": true
+      }
+    },
+    {
+      "command": "joint.as_built",
+      "params": {
+        "name": "Slide motion",
+        "type": "slider",
+        "a": "Slide fixed",
+        "b": "Slide moving",
+        "at": {
+          "occurrence": "Slide fixed",
+          "point": [
+            0,
+            150,
+            0
+          ],
+          "z": [
+            1,
+            0,
+            0
+          ]
+        },
+        "limits": [
+          [
+            0,
+            300
+          ]
+        ],
+        "quiet": true
+      }
+    },
+    {
+      "command": "joint.drive",
+      "params": {
+        "joint": "Hinge motion",
+        "value": 45,
+        "quiet": true
+      }
+    },
+    {
+      "command": "joint.drive",
+      "params": {
+        "joint": "Slide motion",
+        "value": 120,
+        "quiet": true
+      }
+    },
+    {
+      "command": "inspect.measure",
+      "params": {
+        "bodies": [
+          "Lower",
+          "Upper",
+          "Hinge moving",
+          "Slide moving"
+        ]
+      }
+    },
+    {
+      "command": "joint.drive",
+      "params": {
+        "joint": "Hinge motion",
+        "value": 0,
+        "quiet": true
+      }
+    },
+    {
+      "command": "joint.drive",
+      "params": {
+        "joint": "Slide motion",
+        "value": 0,
+        "quiet": true
+      }
+    },
+    {
+      "command": "assembly.bom",
+      "params": {
+        "group_by": [
+          "definition"
+        ]
+      }
+    }
+  ]
+}

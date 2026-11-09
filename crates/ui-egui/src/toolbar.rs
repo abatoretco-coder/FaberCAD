@@ -604,7 +604,8 @@ pub fn app_bar(app: &mut SolveApp, ui: &mut egui::Ui) {
         }
         icons::paint_app_bar(ui.painter(), gear.shrink(7.0), "settings", 1.0);
         crate::scenario::publish_rect("titlebar:preferences", gear);
-        if crate::agent_chat::app_bar_button_shown(app) {
+        #[cfg(any(test, feature = "legacy-embedded-assistant"))]
+        if crate::external_control::app_bar_button_shown(app) {
             assistant_button(app, ui, Rect::from_center_size(pos2(report.left() - 86.0 - search_shift, r.center().y), vec2(32.0, 32.0)));
         }
         crate::scenario::publish_handle("titlebar:preferences", gear.center());
@@ -694,7 +695,7 @@ impl FileAction {
             Self::Undo => !app.session.undo.is_empty(),
             Self::Redo => !app.session.redo.is_empty(),
             Self::ClearRecent => !app.home.recent.is_empty(),
-            Self::AgentChat => crate::agent_chat::app_bar_button_shown(app),
+            Self::AgentChat => crate::external_control::app_bar_button_shown(app),
             _ => true,
         };
         !app.file_picker_busy() && !app.file_load.busy() && !behind_report && (!needs_design || design_shown(app)) && available
@@ -736,7 +737,10 @@ impl FileAction {
                 app.keymap.open = true;
                 app.keymap.read_only = false;
             }
+            #[cfg(any(test, feature = "legacy-embedded-assistant"))]
             Self::AgentChat => crate::agent_chat::toggle(app),
+            #[cfg(not(any(test, feature = "legacy-embedded-assistant")))]
+            Self::AgentChat => {}
             Self::Quit => crate::documents::request_quit(app),
         }
     }
@@ -2531,6 +2535,7 @@ fn app_bar_separator(ui: &egui::Ui, bar: Rect, x: f32, group: &str) {
 }
 
 /// The chat panel's compact entry point. State stays in agent_chat; the bar only paints it.
+#[cfg(any(test, feature = "legacy-embedded-assistant"))]
 fn assistant_button(app: &mut SolveApp, ui: &mut egui::Ui, at: Rect) {
     use crate::agent_chat::AssistantMark;
     let resp = ui.interact(at, ui.scope_id().with("assistant_button"), Sense::click());
@@ -3522,7 +3527,7 @@ pub(crate) fn cancel_unfinished(app: &mut SolveApp) -> bool {
 pub fn shortcuts(app: &mut SolveApp, ctx: &egui::Context) {
     crate::viewport_status::reconcile(app, ctx);
     crate::browser::update_folder_pick(app, ctx);
-    let chat_owner = crate::agent_chat::owns_keyboard_input(app, ctx);
+    let chat_owner = crate::external_control::owns_keyboard_input(app, ctx);
     if design_shown(app) && !chat_owner {
         crate::navigation::step_key_hold(app, ctx);
     } else {
@@ -4482,7 +4487,7 @@ mod header_report_tests {
         h.step(&json!({"click":{"handle":"appbar:help"}})).unwrap();
         assert!(h.app.help.menu);
         let version = crate::i18n::format("help.version", &[("version", crate::update::current_version())]);
-        assert!(h.widget("About SolidCraft").is_some());
+        assert!(h.widget("About FABER").is_some());
         assert!(h.widget(&version).is_none(), "the Help menu has no version row");
     }
 
@@ -4521,7 +4526,7 @@ mod header_report_tests {
         h.step(&json!({"click":{"handle":"appbar:help"}})).unwrap();
         assert!(h.app.help.menu);
         let version = crate::i18n::format("help.version", &[("version", crate::update::current_version())]);
-        let [_, about] = h.widget("About SolidCraft").unwrap();
+        let [_, about] = h.widget("About FABER").unwrap();
         let [_, row] = h.widget(&version).expect("the Help menu lists the version");
         let [_, shortcuts] = h.widget("Keyboard Shortcuts").unwrap();
         assert!(about < row && row < shortcuts, "between About and Keyboard Shortcuts");

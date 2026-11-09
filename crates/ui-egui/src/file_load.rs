@@ -392,7 +392,7 @@ fn reuse_open(app: &mut SolveApp, request: &Request) -> bool {
         if !request.options.is_empty() {
             return Ok(false);
         }
-        crate::agent_chat::with_tool_request(app, request.chat_turn.as_ref(), |app| crate::documents::reuse_path(app, &request.path))
+        crate::external_control::with_tool_request(app, request.chat_turn.as_ref(), |app| crate::documents::reuse_path(app, &request.path))
     });
     match reused {
         Ok(false) => false,
@@ -1160,7 +1160,8 @@ pub fn tick(app: &mut SolveApp, ctx: &egui::Context) {
                     app.big_operation = true;
                 } else {
                     // No tab left for it: `adopt` said why, and nothing else of the open happens.
-                    if !crate::agent_chat::with_tool_request(app, request.chat_turn.as_ref(), |app| crate::documents::adopt(app, made.session)) {
+                    if !crate::external_control::with_tool_request(app, request.chat_turn.as_ref(), |app| crate::documents::adopt(app, made.session))
+                    {
                         app.open_meshing_next = false;
                         // A design to recover stays offered, as when its read fails.
                         if let Kind::Recover { id, dir } = &request.kind {
