@@ -65,8 +65,12 @@ symlink privilege is unavailable; equivalent path traversal cases still run.
 The process-level harness runs fixed, tiny Python programs as fake compilers.
 An allowed request writes its invocation marker. The next external-package
 request is refused; its marker and that of a later local request are absent.
-The harness is bounded by the existing Job/CPU/RAM guard (192-MiB inner commit
-limit, 256-MiB outer test tree). No request can choose a real executable in it.
+On Windows the harness is bounded by the existing Job/CPU/RAM guard (192-MiB
+inner commit limit, 256-MiB outer qualification tree). On Linux it verifies and
+reuses the existing CI cgroup cap, at most 1 GiB; it does not create a nested
+192-MiB limit. Missing or oversized cgroup limits refuse launch. No OS memory
+limit or workflow budget is increased. Each worker retains its 5-second deadline.
+No request can choose a real executable in this harness.
 
 The initial policy qualification ran 53 lightweight tests: 52 passed, one
 skipped. Current adapter qualification is recorded in [CARGO-GATE.md](CARGO-GATE.md).

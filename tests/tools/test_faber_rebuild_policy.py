@@ -1,10 +1,12 @@
 """Authorization regressions and fake compiler processes; never invoke Cargo/rustc."""
 import json
+import math
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 CI_SCRIPTS = Path(__file__).resolve().parents[2] / 'scripts/ci'
 sys.path.insert(0, str(CI_SCRIPTS))
@@ -151,8 +153,13 @@ for index,request in enumerate(json.loads((root/'requests.json').read_text())):
 sys.exit(125 if denied else 0)
 """
         watchdog = budget.WindowsWatchdog(96, 0, 0, 20) if sys.platform == 'win32' else None
+        memory_mb = 192
+        if sys.platform.startswith('linux'):
+            # Linux verifies the existing CI cgroup; it does not create a nested
+            # 192-MiB Job. Reuse its verified cap without changing any OS limit.
+            memory_mb = math.ceil(budget.ensure_guarded(budget.MAX_MEMORY_MB))
         outcome = budget.run_bounded([sys.executable, '-B', '-c', worker, str(CI_SCRIPTS), str(self.root)],
-                                     self.root, timeout_seconds=5, memory_mb=192, watchdog=watchdog)
+                                     self.root, timeout_seconds=5, memory_mb=memory_mb, watchdog=watchdog)
         if watchdog:
             self.assertTrue(outcome.cleanup_verified)
         return outcome
@@ -173,6 +180,25 @@ sys.exit(125 if denied else 0)
         outcome = self.fake_process_requests([dict(kind='build-script', manifest_dir=str(self.external), artifact=str(artifact))])
         self.assertEqual(outcome.returncode, 125)
         self.assertFalse((self.root/'fake-compiler-0').exists(), 'Cached executable execution needs its own authorization gate')
+
+    def test_linux_fake_harness_reuses_only_a_verified_existing_cgroup_limit(self):
+        for inherited in (128, 256, 1024):
+            with self.subTest(inherited=inherited), mock.patch.object(sys, 'platform', 'linux'), \
+                    mock.patch.object(budget, 'ensure_guarded', return_value=inherited) as verify, \
+                    mock.patch.object(budget, 'run_bounded') as launch:
+                self.fake_process_requests([])
+                verify.assert_called_once_with(budget.MAX_MEMORY_MB)
+                self.assertEqual(launch.call_args.kwargs['memory_mb'], inherited)
+                self.assertIsNone(launch.call_args.kwargs['watchdog'])
+                self.assertEqual(launch.call_args.kwargs['timeout_seconds'], 5)
+
+    def test_linux_fake_harness_refuses_before_launch_without_a_valid_cgroup(self):
+        with mock.patch.object(sys, 'platform', 'linux'), \
+                mock.patch.object(budget, 'ensure_guarded', side_effect=budget.BudgetSetupError('No enforced cap')), \
+                mock.patch.object(budget, 'run_bounded') as launch:
+            with self.assertRaisesRegex(budget.BudgetSetupError, 'No enforced cap'):
+                self.fake_process_requests([])
+            launch.assert_not_called()
 
 
 if __name__ == '__main__':
