@@ -24,6 +24,28 @@ class DesktopFeatures(unittest.TestCase):
             self.assertEqual(plan['commands_executed'], [])
             self.assertEqual(list(Path(directory).iterdir()), [], 'Planning must not write build files in the caller directory')
 
+    def test_reconstruction_plan_preserves_strict_owner_limits_and_blocks_execution(self):
+        root = Path(__file__).resolve().parents[2]
+        spec = importlib.util.spec_from_file_location('faber_dev_limits', root / 'scripts/faber_dev.py')
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        policy = json.loads((root / 'scripts/ci/faber_policy.json').read_text(encoding='utf-8'))
+        plan = module.plan()
+        limits = plan['reconstruction_limits']
+        self.assertEqual(limits['attempts'], 1)
+        self.assertGreater(limits['timeout_seconds'], 0)
+        self.assertLessEqual(limits['timeout_seconds'], policy['timeout_seconds'])
+        self.assertLessEqual(limits['aggregate_committed_memory_mb'], policy['memory_mb'])
+        self.assertLess(limits['working_set_abort_mb'], limits['aggregate_committed_memory_mb'])
+        self.assertTrue(limits['working_set_is_sampled_not_a_hard_physical_ram_cap'])
+        self.assertFalse(limits['automatic_retry'])
+        self.assertFalse(limits['automatic_budget_increase'])
+        self.assertEqual(limits['logical_processors'], 1)
+        argv = plan['proposed_build_argv']
+        self.assertEqual(argv[argv.index('--jobs') + 1], str(limits['cargo_jobs']))
+        self.assertFalse(plan['execution_guard_status']['ready_to_execute'])
+        self.assertEqual(plan['commands_executed'], [])
+
     def test_secondary_importers_are_optional_through_every_host(self):
         root = Path(__file__).resolve().parents[2]
         io = tomllib.loads((root / 'crates/io/Cargo.toml').read_text(encoding='utf-8'))

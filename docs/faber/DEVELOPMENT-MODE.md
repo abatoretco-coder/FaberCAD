@@ -22,6 +22,12 @@ different project's relative manifest.
 `proposed_build_argv` describes a possible later, package-scoped, offline/locked
 build; it is not executed and does not authorize one. Native builds still need
 separate owner authorization and an enforced time/memory budget.
+The [targeted reconstruction plan](REBUILD-PLAN.md) sets a single 120-second /
+1-GiB-commit attempt. CPU/headroom guards are implemented and tested on synthetic
+processes. The [Cargo process adapter](CARGO-GATE.md) intercepts compiler and
+cached-script creation before user code, with fake-tool qualification including
+installed Cargo on a disposable workspace. Real compilation remains unauthorized.
+The printed limits are a plan, not an executable build runner.
 
 The development selection disables default features and explicitly keeps
 `profile`. It excludes `raytrace-cpu`, `bundled-render-library`, the legacy
@@ -78,7 +84,7 @@ modules even though it does not reduce the desktop package count further.
 These are resolved graph measurements, not build-time, peak-RAM or binary-size
 measurements. Other dependency kinds are outside this count.
 
-Lightweight CI passes 30 Python tooling tests, manifest/JSON/source checks and
+Lightweight CI runs 53 Python tooling tests (52 pass, one symlink-privilege skip), manifest/JSON/source checks and
 changed Rust formatting checks. It does not compile Rust. Tests were added in
 the existing IO/engine areas for disabled import refusal, unchanged document
 state and capability-aware format lists; enabled decoder fixtures remain gated

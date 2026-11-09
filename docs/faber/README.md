@@ -14,6 +14,9 @@ directory name, not another application.
 - [Build status](BUILD.md): current Windows resource constraints.
 - [Development-cost audit](DEVELOPMENT-AUDIT.md): measured bottlenecks and a staged reduction plan, without compilation.
 - [Development mode](DEVELOPMENT-MODE.md): optional secondary importers and a plan-only selection without CPU rendering.
+- [Targeted reconstruction plan](REBUILD-PLAN.md): strict limits and prerequisites; no compilation authorized or executed.
+- [Reconstruction request policy](REBUILD-POLICY.md): exact local-unit authorization and fake-process regressions.
+- [Cargo process gate](CARGO-GATE.md): Windows interception, including cached scripts; qualified with fake compilers, without Rust compilation.
 - [Headboard motion](HEADBOARD-MOTION.md): real-project qualification fixture.
 
 The [upstream README](../../README-SOLIDCRAFT.md), [architecture](../architecture.md)

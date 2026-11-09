@@ -2,6 +2,8 @@
 
 Windows uses an aggregate Job Object commit limit. Linux requires an existing
 enforced cgroup limit; RLIMIT_AS is deliberately not used as a substitute.
+The opt-in WindowsWatchdog adds verified single-CPU affinity and sampled
+working-set/system-headroom aborts. It does not authorize native compilation.
 """
 from __future__ import annotations
 
@@ -22,6 +24,7 @@ MAX_TIMEOUT_SECONDS = 180
 MAX_MEMORY_MB = 1024
 _MIB = 1024 * 1024
 _JOB_MEMORY = 0x200
+_JOB_AFFINITY = 0x10
 _KILL_ON_CLOSE = 0x2000
 _EXTENDED_LIMITS = 9
 
@@ -39,6 +42,19 @@ class Outcome:
     # Raw Windows job accounting; a refused charge can raise this counter above
     # the configured cap. Do not clamp it or treat it as successful retained RAM.
     peak_memory_mb: float | None = None
+    stop_reason: str | None = None
+    peak_working_set_mb: float | None = None
+    cpu_affinity_mask: int | None = None
+    cleanup_verified: bool = False
+
+
+@dataclass(frozen=True)
+class WindowsWatchdog:
+    """Opt-in single-CPU and sampled RAM/headroom checks, not a build runner."""
+    working_set_mb: int = 768
+    minimum_available_physical_mb: int = 4096
+    minimum_available_commit_mb: int = 2048
+    sample_interval_ms: int = 100
 
 
 class _BasicLimits(ctypes.Structure):
@@ -65,6 +81,19 @@ class _ExtendedLimits(ctypes.Structure):
     ]
 
 
+class _ProcessMemory(ctypes.Structure):
+    _fields_ = [("cb", ctypes.c_uint32), ("faults", ctypes.c_uint32)] + [
+        (name, ctypes.c_size_t) for name in (
+            "peak_working_set", "working_set", "peak_paged", "paged", "peak_nonpaged", "nonpaged", "pagefile", "peak_pagefile")]
+
+
+class _PerformanceInformation(ctypes.Structure):
+    _fields_ = [("cb", ctypes.c_uint32)] + [(name, ctypes.c_size_t) for name in (
+        "commit_total", "commit_limit", "commit_peak", "physical_total", "physical_available", "system_cache",
+        "kernel_total", "kernel_paged", "kernel_nonpaged", "page_size")] + [
+        (name, ctypes.c_uint32) for name in ("handles", "processes", "threads")]
+
+
 def _windows_api():
     api = ctypes.WinDLL("kernel32", use_last_error=True)
     handle, dword, boolean = ctypes.c_void_p, ctypes.c_uint32, ctypes.c_int
@@ -76,6 +105,12 @@ def _windows_api():
         "AssignProcessToJobObject": ([handle, handle], boolean),
         "TerminateJobObject": ([handle, dword], boolean),
         "CloseHandle": ([handle], boolean),
+        "GetCurrentProcess": ([], handle),
+        "GetProcessAffinityMask": ([handle, ctypes.POINTER(ctypes.c_size_t), ctypes.POINTER(ctypes.c_size_t)], boolean),
+        "IsProcessInJob": ([handle, handle, ctypes.POINTER(boolean)], boolean),
+        "WaitForSingleObject": ([handle, dword], dword),
+        "K32GetProcessMemoryInfo": ([handle, ctypes.POINTER(_ProcessMemory), dword], boolean),
+        "K32GetPerformanceInfo": ([ctypes.POINTER(_PerformanceInformation), dword], boolean),
     }
     for name, (arguments, result) in signatures.items():
         function = getattr(api, name)
@@ -94,8 +129,38 @@ def _query_job(api, handle) -> _ExtendedLimits | None:
     return limits
 
 
+def _system_headroom_mb(api):
+    info = _PerformanceInformation()
+    info.cb = ctypes.sizeof(info)
+    if not api.K32GetPerformanceInfo(ctypes.byref(info), info.cb):
+        raise _windows_error("GetPerformanceInfo")
+    if not info.page_size or info.commit_total > info.commit_limit or info.physical_available > info.physical_total:
+        raise BudgetSetupError("Invalid system-memory telemetry")
+    return (info.physical_available * info.page_size / _MIB,
+            (info.commit_limit - info.commit_total) * info.page_size / _MIB)
+
+
+def _headroom_reason(available, watchdog):
+    if (not isinstance(available, (tuple, list)) or len(available) != 2
+            or any(isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0 for value in available)):
+        raise BudgetSetupError("Invalid system-memory telemetry")
+    physical, commit = available
+    if physical < watchdog.minimum_available_physical_mb:
+        return "available_physical_memory"
+    if commit < watchdog.minimum_available_commit_mb:
+        return "available_system_commit"
+    return None
+
+
+def _process_affinity(api, process):
+    mask, system = ctypes.c_size_t(), ctypes.c_size_t()
+    if not api.GetProcessAffinityMask(process, ctypes.byref(mask), ctypes.byref(system)) or not mask.value:
+        raise _windows_error("GetProcessAffinityMask")
+    return mask.value
+
+
 class _WindowsJob:
-    def __init__(self, memory_mb: int):
+    def __init__(self, memory_mb: int, watchdog: WindowsWatchdog | None = None):
         self.api = _windows_api()
         self.handle = self.api.CreateJobObjectW(None, None)
         if not self.handle:
@@ -103,10 +168,27 @@ class _WindowsJob:
         limits = _ExtendedLimits()
         limits.basic.flags = _JOB_MEMORY | _KILL_ON_CLOSE
         limits.job_memory = memory_mb * _MIB
+        self.affinity_mask = None
+        if watchdog is not None:
+            try:
+                allowed = _process_affinity(self.api, self.api.GetCurrentProcess())
+                self.affinity_mask = allowed & -allowed
+                limits.basic.flags |= _JOB_AFFINITY
+                limits.basic.affinity = self.affinity_mask
+            except BaseException:
+                self.close()
+                raise
         if not self.api.SetInformationJobObject(self.handle, _EXTENDED_LIMITS, ctypes.byref(limits), ctypes.sizeof(limits)):
             error = _windows_error("SetInformationJobObject")
             self.close()
             raise error
+        if watchdog is not None:
+            actual = _query_job(self.api, self.handle)
+            required = _JOB_MEMORY | _KILL_ON_CLOSE | _JOB_AFFINITY
+            if (actual is None or actual.basic.flags & required != required or actual.job_memory != limits.job_memory
+                    or actual.basic.affinity != self.affinity_mask):
+                self.close()
+                raise BudgetSetupError("Job memory/affinity limits could not be verified")
 
     def assign(self, pid: int) -> None:
         # Assignment requires PROCESS_SET_QUOTA | PROCESS_TERMINATE.
@@ -122,6 +204,89 @@ class _WindowsJob:
     def peak_mb(self) -> float | None:
         limits = _query_job(self.api, self.handle)
         return None if limits is None else limits.peak_job_memory / _MIB
+
+    def pids(self):
+        capacity = 64
+        while capacity <= 4096:
+            class ProcessIds(ctypes.Structure):
+                _fields_ = [("assigned", ctypes.c_uint32), ("count", ctypes.c_uint32), ("ids", ctypes.c_size_t * capacity)]
+            info = ProcessIds()
+            ok = self.api.QueryInformationJobObject(self.handle, 3, ctypes.byref(info), ctypes.sizeof(info), None)
+            if ok and info.count == info.assigned and info.count <= capacity:
+                return list(info.ids[:info.count])
+            if not ok and ctypes.get_last_error() != 234:
+                raise _windows_error("Query Job process IDs")
+            capacity = max(capacity * 2, info.assigned)
+        raise BudgetSetupError("Job process list exceeded telemetry capacity")
+
+    def working_set_mb(self):
+        total = 0
+        for pid in self.pids():
+            # Query and synchronize only: do not change individual process limits.
+            process = self.api.OpenProcess(0x0400 | 0x00100000, False, pid)
+            if not process:
+                error = ctypes.get_last_error()
+                if error == 87 or pid not in self.pids():  # A sampled process has already exited.
+                    continue
+                raise BudgetSetupError(f"OpenProcess for telemetry: Windows error {error}")
+            try:
+                in_job = ctypes.c_int()
+                if not self.api.IsProcessInJob(process, self.handle, ctypes.byref(in_job)):
+                    raise _windows_error("IsProcessInJob")
+                if not in_job.value or self.api.WaitForSingleObject(process, 0) == 0:
+                    continue  # Exited or PID reused outside this Job.
+                try:
+                    affinity = _process_affinity(self.api, process)
+                except BudgetSetupError:
+                    if self.api.WaitForSingleObject(process, 0) == 0:
+                        continue
+                    raise
+                if affinity != self.affinity_mask:
+                    raise BudgetSetupError("A Job process has unexpected CPU affinity")
+                memory = _ProcessMemory()
+                memory.cb = ctypes.sizeof(memory)
+                if not self.api.K32GetProcessMemoryInfo(process, ctypes.byref(memory), memory.cb):
+                    if self.api.WaitForSingleObject(process, 0) == 0:
+                        continue
+                    raise _windows_error("GetProcessMemoryInfo")
+                total += memory.working_set
+            finally:
+                self.api.CloseHandle(process)
+        return total / _MIB
+
+    def stop_and_drain(self):
+        deadline = time.monotonic() + 5
+        processes = []
+        try:
+            # Job membership can reach zero before process teardown releases its
+            # working-directory handle. Also wait on the owned process objects.
+            for pid in self.pids():
+                process = self.api.OpenProcess(0x0400 | 0x00100000, False, pid)
+                if not process:
+                    error = ctypes.get_last_error()
+                    if error == 87 or pid not in self.pids():
+                        continue
+                    raise BudgetSetupError(f"OpenProcess for cleanup: Windows error {error}")
+                in_job = ctypes.c_int()
+                if not self.api.IsProcessInJob(process, self.handle, ctypes.byref(in_job)):
+                    self.api.CloseHandle(process)
+                    raise _windows_error("Cleanup membership")
+                if in_job.value:
+                    processes.append(process)
+                else:
+                    self.api.CloseHandle(process)
+            self.terminate()
+            for process in processes:
+                remaining_ms = max(0, int((deadline - time.monotonic()) * 1000))
+                if self.api.WaitForSingleObject(process, remaining_ms) != 0:
+                    raise BudgetSetupError("Owned process exit could not be verified")
+            while self.pids():
+                if time.monotonic() >= deadline:
+                    raise BudgetSetupError("Job descendant cleanup could not be verified")
+                time.sleep(.01)
+        finally:
+            for process in processes:
+                self.api.CloseHandle(process)
 
     def terminate(self) -> None:
         if self.handle and not self.api.TerminateJobObject(self.handle, 124):
@@ -234,19 +399,61 @@ sys.exit(subprocess.call(json.loads(sys.argv[1])))
 """
 
 
-def _run_windows(command, cwd, deadline, memory_mb, env):
-    job = _WindowsJob(memory_mb)
+def _watch_windows(job, child, deadline, watchdog):
+    peak_ws = 0.0
+    reason = None
+    while True:
+        started = time.monotonic()
+        if started >= deadline:
+            reason = "timeout"
+            break
+        try:
+            reason = _headroom_reason(_system_headroom_mb(job.api), watchdog)
+            working_set = job.working_set_mb()
+            peak_ws = max(peak_ws, working_set)
+            if working_set > watchdog.working_set_mb:
+                reason = "working_set"
+        except (BudgetSetupError, OSError) as error:
+            reason = f"telemetry_unavailable: {error}"
+        if reason is not None or child.poll() is not None:
+            break
+        time.sleep(max(0, min(started + watchdog.sample_interval_ms / 1000, deadline) - time.monotonic()))
+    code = child.poll() if reason is None else (124 if reason == "timeout" else 125)
+    job.stop_and_drain()
+    child.wait(timeout=5)
+    peak = job.peak_mb()
+    if peak is None:
+        code, reason = 125, "telemetry_unavailable: Job commit peak"
+    return code, reason == "timeout", peak, reason, peak_ws, job.affinity_mask, True
+
+
+def _run_windows(command, cwd, deadline, memory_mb, env, watchdog=None):
+    job = _WindowsJob(memory_mb, watchdog)
     child = None
     try:
+        if watchdog is not None:
+            reason = _headroom_reason(_system_headroom_mb(job.api), watchdog)
+            if reason:
+                raise BudgetSetupError(f"Preflight refused: {reason}")
         child = subprocess.Popen([sys.executable, "-I", "-S", "-c", _BOOTSTRAP, json.dumps(command, ensure_ascii=True)], cwd=cwd, env=env, stdin=subprocess.PIPE)
         job.assign(child.pid)
+        if watchdog is not None:
+            reason = _headroom_reason(_system_headroom_mb(job.api), watchdog)
+            if reason or job.working_set_mb() > watchdog.working_set_mb:
+                raise BudgetSetupError(f"Preflight refused before command release: {reason or 'working_set'}")
         if time.monotonic() >= deadline:
+            if watchdog is not None:
+                job.stop_and_drain()
+                child.wait(timeout=5)
+                return 124, True, job.peak_mb(), "timeout", 0.0, job.affinity_mask, True
             job.terminate()
             child.wait(timeout=5)
             return 124, True, job.peak_mb()
         child.stdin.write(b"1")
         child.stdin.close()
         child.stdin = None
+        if watchdog is not None:
+            return _watch_windows(job, child, deadline, watchdog)
         try:
             returncode = child.wait(timeout=max(0, deadline - time.monotonic()))
             timed_out = False
@@ -297,15 +504,39 @@ def _run_linux(command, cwd, deadline, memory_mb, env):
         child.wait(timeout=5)
 
 
+def _validate_watchdog(watchdog, memory_mb):
+    if not isinstance(watchdog, WindowsWatchdog):
+        raise ValueError("watchdog must be a WindowsWatchdog")
+    for name in ("working_set_mb", "minimum_available_physical_mb", "minimum_available_commit_mb", "sample_interval_ms"):
+        value = getattr(watchdog, name)
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise ValueError(f"{name} must be an integer")
+    # Shared resident pages are counted in every process working set. This metric
+    # is independent of Job commit; both have their own unchanged global ceiling.
+    if not 1 <= watchdog.working_set_mb <= MAX_MEMORY_MB:
+        raise ValueError("working_set_mb must be positive and at most the global memory ceiling")
+    if watchdog.minimum_available_physical_mb < 0 or watchdog.minimum_available_commit_mb < 0:
+        raise ValueError("System headroom thresholds cannot be negative")
+    if not 1 <= watchdog.sample_interval_ms <= 100:
+        raise ValueError("sample_interval_ms must be between 1 and 100")
+
+
 def run_bounded(command: list[str], cwd: Path, timeout_seconds: float = MAX_TIMEOUT_SECONDS,
-                memory_mb: int = MAX_MEMORY_MB, env: dict | None = None) -> Outcome:
+                memory_mb: int = MAX_MEMORY_MB, env: dict | None = None,
+                watchdog: WindowsWatchdog | None = None) -> Outcome:
     """Run with aggregate memory and elapsed-time bounds; inherit output, never use a shell.
 
     Linux callers must enter a constrained cgroup first (for example a transient
     systemd service with MemoryMax, MemorySwapMax=0, RuntimeMaxSec and KillMode).
     Setup failure raises BudgetSetupError without starting the supplied command.
+    An optional WindowsWatchdog has no unsupported-platform fallback. Working
+    sets are sampled, not an absolute aggregate physical-RAM cap.
     """
     _validate_memory(memory_mb)
+    if watchdog is not None:
+        _validate_watchdog(watchdog, memory_mb)
+        if sys.platform != "win32":
+            raise BudgetSetupError("CPU/RAM watchdog currently requires Windows; no unguarded fallback")
     if isinstance(timeout_seconds, bool) or not isinstance(timeout_seconds, (int, float)) or not math.isfinite(timeout_seconds) or not 0 < timeout_seconds <= MAX_TIMEOUT_SECONDS:
         raise ValueError(f"timeout_seconds must be finite, above zero and at most {MAX_TIMEOUT_SECONDS}")
     if not isinstance(command, list) or not command or any(not isinstance(arg, str) or "\0" in arg for arg in command) or not command[0]:
@@ -315,10 +546,11 @@ def run_bounded(command: list[str], cwd: Path, timeout_seconds: float = MAX_TIME
         raise ValueError("cwd must be a directory")
     started = time.monotonic()
     deadline = started + timeout_seconds
+    extra = ()
     if sys.platform == "win32":
-        code, timed_out, peak = _run_windows(command, cwd, deadline, memory_mb, env)
+        code, timed_out, peak, *extra = _run_windows(command, cwd, deadline, memory_mb, env, watchdog)
     elif sys.platform.startswith("linux"):
         code, timed_out, peak = _run_linux(command, cwd, deadline, memory_mb, env)
     else:
         raise BudgetSetupError("Resource guard supports only Windows Jobs and Linux cgroups")
-    return Outcome(code, timed_out, memory_mb, time.monotonic() - started, peak)
+    return Outcome(code, timed_out, memory_mb, time.monotonic() - started, peak, *extra)

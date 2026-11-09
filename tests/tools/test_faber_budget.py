@@ -14,6 +14,27 @@ import resource_budget as budget
 
 
 class CgroupDiscoveryTests(unittest.TestCase):
+    def test_watchdog_rejects_bad_parameters_before_starting_any_process(self):
+        for config in (budget.WindowsWatchdog(working_set_mb=0), budget.WindowsWatchdog(working_set_mb=1025),
+                       budget.WindowsWatchdog(working_set_mb=True), budget.WindowsWatchdog(working_set_mb=64, sample_interval_ms=101),
+                       budget.WindowsWatchdog(working_set_mb=64, sample_interval_ms=0),
+                       budget.WindowsWatchdog(working_set_mb=64, minimum_available_commit_mb=-1)):
+            with self.subTest(config=config), mock.patch.object(budget.subprocess, 'Popen') as spawn:
+                with self.assertRaises(ValueError):
+                    budget.run_bounded([sys.executable, '-c', 'pass'], Path.cwd(), 5, 128, watchdog=config)
+                spawn.assert_not_called()
+
+    def test_watchdog_never_falls_back_on_unsupported_platforms(self):
+        with mock.patch.object(budget.sys, 'platform', 'linux'), mock.patch.object(budget.subprocess, 'Popen') as spawn:
+            with self.assertRaises(budget.BudgetSetupError):
+                budget.run_bounded([sys.executable, '-c', 'pass'], Path.cwd(), watchdog=budget.WindowsWatchdog())
+            spawn.assert_not_called()
+
+    def test_missing_or_nonfinite_headroom_is_not_treated_as_safe(self):
+        for value in (None, (float('nan'), 2000), (1000, float('inf')), (-1, 2000), (True, 1000)):
+            with self.subTest(value=value), self.assertRaises(budget.BudgetSetupError):
+                budget._headroom_reason(value, budget.WindowsWatchdog())
+
     def query(self, membership, mountinfo, files):
         texts = {"/proc/self/cgroup": membership, "/proc/self/mountinfo": mountinfo, **files}
         def read(path):
@@ -160,6 +181,160 @@ Path(sys.argv[1]).write_text(json.dumps([blocked,allocated]))
                 with self.assertRaises(budget.BudgetSetupError):
                     budget.run_bounded(command, Path(directory), 5, 128)
             self.assertFalse(marker.exists())
+
+
+@unittest.skipUnless(sys.platform == 'win32', 'Real CPU/RAM watchdog probes require Windows')
+class WindowsWatchdogTests(unittest.TestCase):
+    def config(self, **changes):
+        # Small probes use reduced headroom floors; production defaults remain 4/2 GiB.
+        values = dict(working_set_mb=96, minimum_available_physical_mb=0,
+                      minimum_available_commit_mb=0, sample_interval_ms=20)
+        values.update(changes)
+        return budget.WindowsWatchdog(**values)
+
+    def test_one_cpu_is_enforced_in_parent_and_grandchild(self):
+        with tempfile.TemporaryDirectory(prefix='faber-watchdog-') as directory:
+            parent, descendant = Path(directory)/'parent.json', Path(directory)/'descendant.json'
+            probe = """import ctypes as c,json,sys
+from pathlib import Path
+k=c.WinDLL('kernel32',use_last_error=True)
+k.GetCurrentProcess.restype=c.c_void_p
+k.GetProcessAffinityMask.argtypes=[c.c_void_p,c.POINTER(c.c_size_t),c.POINTER(c.c_size_t)]
+k.SetProcessAffinityMask.argtypes=[c.c_void_p,c.c_size_t]
+h=k.GetCurrentProcess();mask=c.c_size_t();system=c.c_size_t()
+assert k.GetProcessAffinityMask(h,c.byref(mask),c.byref(system))
+before=mask.value
+k.SetProcessAffinityMask(h,system.value)
+assert k.GetProcessAffinityMask(h,c.byref(mask),c.byref(system))
+Path(sys.argv[1]).write_text(json.dumps([before,mask.value]))
+"""
+            code = f"import subprocess,sys;subprocess.run([sys.executable,'-c',{probe!r},sys.argv[2]],check=True);exec({probe!r})"
+            result = budget.run_bounded([sys.executable, '-c', code, str(parent), str(descendant)], Path(directory), 5, 192,
+                                        watchdog=self.config())
+            self.assertEqual(result.returncode, 0)
+            self.assertTrue(result.cleanup_verified)
+            self.assertIsNone(result.stop_reason)
+            mask = result.cpu_affinity_mask
+            self.assertEqual(mask.bit_count(), 1)
+            self.assertEqual(json.loads(parent.read_text()), [mask, mask])
+            self.assertEqual(json.loads(descendant.read_text()), [mask, mask])
+            self.assertGreater(result.peak_working_set_mb, 0)
+
+    def test_failed_affinity_or_preflight_telemetry_cannot_launch_command(self):
+        with tempfile.TemporaryDirectory(prefix='faber-watchdog-') as directory:
+            marker = Path(directory)/'must-not-run'
+            command = [sys.executable, '-c', f"from pathlib import Path;Path({str(marker)!r}).touch()"]
+            for function in ('_process_affinity', '_system_headroom_mb'):
+                with self.subTest(function=function), mock.patch.object(budget, function, side_effect=budget.BudgetSetupError('missing telemetry')):
+                    with mock.patch.object(budget.subprocess, 'Popen') as spawn:
+                        with self.assertRaises(budget.BudgetSetupError):
+                            budget.run_bounded(command, Path(directory), 5, 192, watchdog=self.config())
+                        spawn.assert_not_called()
+            self.assertFalse(marker.exists())
+
+    def test_unverified_job_limits_cannot_launch_command(self):
+        with mock.patch.object(budget, '_query_job', return_value=None), mock.patch.object(budget.subprocess, 'Popen') as spawn:
+            with self.assertRaises(budget.BudgetSetupError):
+                budget.run_bounded([sys.executable, '-c', 'pass'], Path.cwd(), 5, 192, watchdog=self.config())
+            spawn.assert_not_called()
+
+    def test_low_physical_or_commit_headroom_prevents_process_creation(self):
+        for reading, expected in [((0, 10000), 'available_physical_memory'), ((10000, 0), 'available_system_commit')]:
+            with self.subTest(reading=reading), mock.patch.object(budget, '_system_headroom_mb', return_value=reading):
+                with mock.patch.object(budget.subprocess, 'Popen') as spawn:
+                    with self.assertRaisesRegex(budget.BudgetSetupError, expected):
+                        budget.run_bounded([sys.executable, '-c', 'pass'], Path.cwd(), 5, 192,
+                                           watchdog=budget.WindowsWatchdog(96, 1, 1, 20))
+                    spawn.assert_not_called()
+
+    def test_headroom_loss_and_missing_telemetry_stop_a_running_command(self):
+        original = budget._system_headroom_mb
+        for fault in ('available_physical_memory', 'available_system_commit', 'telemetry_unavailable'):
+            with self.subTest(fault=fault), tempfile.TemporaryDirectory(prefix='faber-watchdog-') as directory:
+                marker = Path(directory)/'started'
+                def sample(api):
+                    if marker.exists():
+                        if fault == 'telemetry_unavailable':
+                            raise budget.BudgetSetupError('simulated lost observation')
+                        return (0, 10000) if fault == 'available_physical_memory' else (10000, 0)
+                    return original(api)
+                code = f"import time;from pathlib import Path;Path({str(marker)!r}).touch();time.sleep(4)"
+                with mock.patch.object(budget, '_system_headroom_mb', side_effect=sample):
+                    result = budget.run_bounded([sys.executable, '-c', code], Path(directory), 5, 192,
+                                                watchdog=budget.WindowsWatchdog(96, 1, 1, 20))
+                self.assertTrue(marker.exists(), 'The payload must run before the injected observation failure')
+                self.assertEqual(result.returncode, 125)
+                self.assertTrue(result.stop_reason.startswith(fault), result.stop_reason)
+                self.assertTrue(result.cleanup_verified)
+                self.assertFalse(result.timed_out)
+
+    def test_working_set_abort_kills_owned_descendants_but_not_other_processes(self):
+        with tempfile.TemporaryDirectory(prefix='faber-watchdog-') as directory:
+            owned, other = Path(directory)/'owned', Path(directory)/'other'
+            heartbeat = "import sys,time;from pathlib import Path\np=Path(sys.argv[1])\nwhile True:\n p.write_text(str(time.monotonic_ns()));time.sleep(.03)\n"
+            # Append-only progress cannot be sampled during write_text's truncate window.
+            spectator_code = "import sys,time\nf=open(sys.argv[1],'ab',buffering=0)\nwhile True:\n f.write(b'.');time.sleep(.03)\n"
+            spectator = budget.subprocess.Popen([sys.executable, '-c', spectator_code, str(other)])
+            try:
+                code = (f"import sys,time,subprocess;from pathlib import Path;subprocess.Popen([sys.executable,'-c',{heartbeat!r},sys.argv[1]])\n"
+                        "while not Path(sys.argv[1]).exists(): time.sleep(.01)\n"
+                        "payload=bytearray(64*1024*1024);time.sleep(4)")
+                result = budget.run_bounded([sys.executable, '-c', code, str(owned)], Path(directory), 5, 192,
+                                            watchdog=budget.WindowsWatchdog(48, 0, 0, 20))
+                self.assertEqual(result.returncode, 125)
+                self.assertEqual(result.stop_reason, 'working_set')
+                self.assertGreater(result.peak_working_set_mb, 48)
+                self.assertTrue(result.cleanup_verified)
+                self.assertTrue(owned.exists())
+                before = owned.read_text()
+                other_before = other.stat().st_size
+                time.sleep(.15)
+                self.assertEqual(owned.read_text(), before)
+                self.assertIsNone(spectator.poll(), 'Watchdog must not stop a process outside its own Job')
+                deadline = time.monotonic() + 1
+                while other.stat().st_size <= other_before and time.monotonic() < deadline:
+                    time.sleep(.02)
+                self.assertGreater(other.stat().st_size, other_before)
+            finally:
+                spectator.terminate()
+                spectator.wait(timeout=5)
+                spectator._handle.Close()
+
+    def test_hard_commit_limit_remains_enforced_with_watchdog(self):
+        with tempfile.TemporaryDirectory(prefix='faber-watchdog-') as directory:
+            marker = Path(directory)/'pressure.json'
+            code = """import json,sys
+from pathlib import Path
+chunks=[]
+try:
+    for _ in range(16): chunks.append(bytearray(8*1024*1024))
+except MemoryError:
+    Path(sys.argv[1]).write_text(json.dumps({'refused':True,'allocated_mb':len(chunks)*8}))
+"""
+            result = budget.run_bounded([sys.executable, '-c', code, str(marker)], Path(directory), 5, 128,
+                                        watchdog=budget.WindowsWatchdog(192, 0, 0, 20))
+            self.assertEqual(result.returncode, 0, result)
+            self.assertTrue(result.cleanup_verified)
+            pressure = json.loads(marker.read_text())
+            self.assertTrue(pressure['refused'])
+            self.assertLess(pressure['allocated_mb'], 128)
+
+    def test_timeout_and_success_both_drain_owned_descendants(self):
+        for timeout in (True, False):
+            with self.subTest(timeout=timeout), tempfile.TemporaryDirectory(prefix='faber-watchdog-') as directory:
+                marker = Path(directory)/'heartbeat'
+                heartbeat = "import sys,time;from pathlib import Path\np=Path(sys.argv[1])\nwhile True:\n p.write_text(str(time.monotonic_ns()));time.sleep(.03)\n"
+                code = (f"import sys,time,subprocess;from pathlib import Path;subprocess.Popen([sys.executable,'-c',{heartbeat!r},sys.argv[1]])\n"
+                        "while not Path(sys.argv[1]).exists(): time.sleep(.01)\n" + ("time.sleep(4)" if timeout else ""))
+                result = budget.run_bounded([sys.executable, '-c', code, str(marker)], Path(directory), .6 if timeout else 5, 192,
+                                            watchdog=self.config())
+                self.assertEqual(result.returncode, 124 if timeout else 0)
+                self.assertEqual(result.timed_out, timeout)
+                self.assertTrue(result.cleanup_verified)
+                self.assertTrue(marker.exists())
+                before = marker.read_text()
+                time.sleep(.15)
+                self.assertEqual(marker.read_text(), before)
 
 
 if __name__ == "__main__":
