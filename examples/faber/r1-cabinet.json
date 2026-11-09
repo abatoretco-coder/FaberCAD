@@ -1,0 +1,47 @@
+{
+  "commands": [
+    {"command": "file.new", "params": {"name": "FABER R1 plywood cabinet"}},
+    {"command": "parameters.add", "params": {"name": "cabinet_width", "expression": "600 mm", "favorite": true}},
+    {"command": "parameters.add", "params": {"name": "cabinet_depth", "expression": "400 mm", "favorite": true}},
+    {"command": "parameters.add", "params": {"name": "cabinet_height", "expression": "720 mm", "favorite": true}},
+    {"command": "parameters.add", "params": {"name": "panel", "expression": "18 mm", "favorite": true}},
+    {"command": "material.create", "params": {"name": "Birch plywood 18 mm", "density_g_cm3": 0.68, "color": "#D9B77E", "pbr": {"metallic": 0.0, "roughness": 0.7, "dielectric_ior": 1.53}}},
+
+    {"command": "component.create", "params": {"name": "Left side"}},
+    {"command": "solid.box", "params": {"corner": [0, 0, 0], "length": "panel", "width": "cabinet_depth", "height": "cabinet_height", "body_name": "Left side panel"}},
+    {"command": "material.assign", "params": {"bodies": ["Left side panel"], "material": "Birch plywood 18 mm"}},
+    {"command": "component.metadata.set", "params": {"component": "Left side", "part_number": "PLY-18-SIDE", "description": "Birch plywood side panel", "properties": {"finished_length_mm": "720", "finished_width_mm": "400", "finished_thickness_mm": "18", "grain_axis": "height"}}},
+    {"command": "component.activate", "params": {"component": "root"}},
+
+    {"command": "component.create", "params": {"name": "Right side"}},
+    {"command": "solid.box", "params": {"corner": ["cabinet_width - panel", 0, 0], "length": "panel", "width": "cabinet_depth", "height": "cabinet_height", "body_name": "Right side panel"}},
+    {"command": "material.assign", "params": {"bodies": ["Right side panel"], "material": "Birch plywood 18 mm"}},
+    {"command": "component.metadata.set", "params": {"component": "Right side", "part_number": "PLY-18-SIDE", "description": "Birch plywood side panel", "properties": {"finished_length_mm": "720", "finished_width_mm": "400", "finished_thickness_mm": "18", "grain_axis": "height"}}},
+    {"command": "component.activate", "params": {"component": "root"}},
+
+    {"command": "component.create", "params": {"name": "Bottom"}},
+    {"command": "solid.box", "params": {"corner": ["panel", 0, 0], "length": "cabinet_width - 2 * panel", "width": "cabinet_depth", "height": "panel", "body_name": "Bottom panel"}},
+    {"command": "material.assign", "params": {"bodies": ["Bottom panel"], "material": "Birch plywood 18 mm"}},
+    {"command": "component.metadata.set", "params": {"component": "Bottom", "part_number": "PLY-18-HORIZONTAL", "description": "Birch plywood horizontal panel", "properties": {"finished_length_mm": "564", "finished_width_mm": "400", "finished_thickness_mm": "18", "grain_axis": "length"}}},
+    {"command": "component.activate", "params": {"component": "root"}},
+
+    {"command": "component.create", "params": {"name": "Top"}},
+    {"command": "solid.box", "params": {"corner": ["panel", 0, "cabinet_height - panel"], "length": "cabinet_width - 2 * panel", "width": "cabinet_depth", "height": "panel", "body_name": "Top panel"}},
+    {"command": "material.assign", "params": {"bodies": ["Top panel"], "material": "Birch plywood 18 mm"}},
+    {"command": "component.metadata.set", "params": {"component": "Top", "part_number": "PLY-18-HORIZONTAL", "description": "Birch plywood horizontal panel", "properties": {"finished_length_mm": "564", "finished_width_mm": "400", "finished_thickness_mm": "18", "grain_axis": "length"}}},
+    {"command": "component.activate", "params": {"component": "root"}},
+
+    {"command": "component.create", "params": {"name": "Shelf"}},
+    {"command": "solid.box", "params": {"corner": ["panel", 0, "cabinet_height / 2 - panel / 2"], "length": "cabinet_width - 2 * panel", "width": "cabinet_depth - panel", "height": "panel", "body_name": "Shelf panel"}},
+    {"command": "material.assign", "params": {"bodies": ["Shelf panel"], "material": "Birch plywood 18 mm"}},
+    {"command": "component.metadata.set", "params": {"component": "Shelf", "part_number": "PLY-18-SHELF", "description": "Birch plywood shelf", "properties": {"finished_length_mm": "564", "finished_width_mm": "382", "finished_thickness_mm": "18", "grain_axis": "length"}}},
+    {"command": "component.activate", "params": {"component": "root"}},
+
+    {"command": "component.create", "params": {"name": "Back"}},
+    {"command": "solid.box", "params": {"corner": ["panel", "cabinet_depth - panel", "panel"], "length": "cabinet_width - 2 * panel", "width": "panel", "height": "cabinet_height - 2 * panel", "body_name": "Back panel"}},
+    {"command": "material.assign", "params": {"bodies": ["Back panel"], "material": "Birch plywood 18 mm"}},
+    {"command": "component.metadata.set", "params": {"component": "Back", "part_number": "PLY-18-BACK", "description": "Birch plywood back panel", "properties": {"finished_length_mm": "684", "finished_width_mm": "564", "finished_thickness_mm": "18", "grain_axis": "height"}}},
+    {"command": "component.activate", "params": {"component": "root"}},
+    {"command": "assembly.bom", "params": {"path": "target/r1/cabinet-bom.json"}}
+  ]
+}

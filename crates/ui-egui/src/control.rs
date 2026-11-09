@@ -872,7 +872,7 @@ fn dispatch(app: &mut SolveApp, ctx: &egui::Context, method: &str, p: &Value) ->
             DESIGN_WATCH.publish(&app.session.document_id, revision);
             ok(json!({"document_id": app.session.document_id, "revision": revision}))
         }
-        // What the MCP server bridged to this app shapes its output with (Preferences › AI).
+        // What the MCP server bridged to this app shapes its output with (Preferences › External control).
         "mcp.options" => ok(json!({"compact": app.preferences.mcp_compact})),
         "ui.messages" => ok(crate::messages::control(app, p)),
         "ui.inspect" => ok(json!({

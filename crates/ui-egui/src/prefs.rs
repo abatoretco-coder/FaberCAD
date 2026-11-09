@@ -324,8 +324,24 @@ pub fn choose_nav_preset(prefs: &mut Prefs, preset: &NavPreset) {
     }
 }
 /// Stable control-channel names; presentation labels may be shorter.
-pub const PAGES: &[&str] =
-    &["General", "Appearance", "Layout", "Graphics", "Design", "Sketch", "Tools", "Navigation", "3D mouse", "Shortcuts", "Assistant", "Plugins"];
+pub const PAGES: &[&str] = if cfg!(test) {
+    &["General", "Appearance", "Layout", "Graphics", "Design", "Sketch", "Tools", "Navigation", "3D mouse", "Shortcuts", "Assistant", "Plugins"]
+} else {
+    &[
+        "General",
+        "Appearance",
+        "Layout",
+        "Graphics",
+        "Design",
+        "Sketch",
+        "Tools",
+        "Navigation",
+        "3D mouse",
+        "Shortcuts",
+        "External control",
+        "Plugins",
+    ]
+};
 pub const PAGE_GENERAL: usize = 0;
 pub const PAGE_APPEARANCE: usize = 1;
 pub const PAGE_LAYOUT: usize = 2;
@@ -423,9 +439,9 @@ const WINDOW_PAGES: &[ui_kit::WindowPage<SolveApp>] = &[
     },
     ui_kit::WindowPage {
         icon: "prefs_assistant",
-        label: "prefs.assistant",
+        label: if cfg!(test) { "prefs.assistant" } else { "faber.external_control.title" },
         group: Some("prefs.extend"),
-        handle: "prefs:page:Assistant",
+        handle: if cfg!(test) { "prefs:page:Assistant" } else { "prefs:page:External control" },
         scroll: true,
         draw: window_page::<PAGE_ASSISTANT>,
     },
@@ -442,6 +458,10 @@ const WINDOW_PAGES: &[ui_kit::WindowPage<SolveApp>] = &[
 /// Former page names remain usable through both ui.prefs and scenario handles.
 const PAGE_ALIASES: &[(&str, usize)] = &[
     ("AI", PAGE_ASSISTANT),
+    ("Assistant", PAGE_ASSISTANT),
+    ("Codex", PAGE_ASSISTANT),
+    ("Contrôle externe", PAGE_ASSISTANT),
+    ("External control", PAGE_ASSISTANT),
     ("Interface", PAGE_APPEARANCE),
     ("Interface/navigation bar", PAGE_LAYOUT),
     ("Keyboard Shortcuts", PAGE_SHORTCUTS),
@@ -1571,7 +1591,7 @@ preference_settings! {
     custom_slicers: Vec<String> = Vec::new();
     /// AI features (docs/agent-chat.md): the master switch. Off: no AI button, shortcut, menu
     /// entry or panel, and nothing is looked for or started.
-    ai_features: bool = true, PAGE_ASSISTANT;
+    ai_features: bool = false, PAGE_ASSISTANT;
     /// The Assistant button in the application bar (the shortcut and View menu entry stay).
     ai_toolbar_button: bool = true, PAGE_ASSISTANT;
     /// An agent's slow commands over the control channel (MCP) compute off the window thread,
@@ -1583,7 +1603,7 @@ preference_settings! {
     agent_control: bool = true, PAGE_ASSISTANT;
     /// Add SolidCraft's MCP server to the AI apps installed on this computer at start-up
     /// ([`crate::ai_connect`]); off takes the entries out again.
-    connect_ai_apps: bool = true, PAGE_ASSISTANT;
+    connect_ai_apps: bool = false, PAGE_ASSISTANT;
     /// Agents the user added (the installed ones are found by themselves). API keys are never
     /// here: they live in the system keychain.
     agents: Vec<crate::agent_chat::agents::AgentConfig> = Vec::new();
@@ -2969,7 +2989,8 @@ fn draw_page(app: &mut SolveApp, ui: &mut egui::Ui, index: usize, t: &Tokens) {
                 ui_kit::settings_page(ui, show);
             }
         }
-        PAGE_ASSISTANT => crate::agent_chat::settings::page(app, ui),
+        PAGE_ASSISTANT if crate::external_control::EMBEDDED_ASSISTANT => crate::agent_chat::settings::page(app, ui),
+        PAGE_ASSISTANT => crate::external_control::page(app, ui),
         PAGE_PLUGINS => crate::plugins::page(app, ui),
         PAGE_GENERAL => general::show(app, ui),
         PAGE_APPEARANCE => interface::appearance(app, ui, t),

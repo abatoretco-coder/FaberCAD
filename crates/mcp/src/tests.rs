@@ -3044,8 +3044,8 @@ fn a_bridge_made_before_the_app_runs_connects_once_it_does() {
     let port = std::net::TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap().port();
     let addr = format!("127.0.0.1:{port}");
     let mut remote = crate::Remote::new(&addr, Some("0123456789abcdef0123456789abcdef"));
-    // Still "connected to the SolidCraft app", which the skills read as bridged.
-    assert!(remote.describe().starts_with("connected to the SolidCraft app") && remote.describe().contains("not running"), "{}", remote.describe());
+    // Still names the FABER app, which the skills read as bridged.
+    assert!(remote.describe().starts_with("will connect to the FABER app") && remote.describe().contains("first tool call"), "{}", remote.describe());
     let e = remote.call("engine.execute", json!({"command": "inspect.measure"})).unwrap_err();
     assert!(e.starts_with(crate::backend::NOT_RUNNING) && e.contains(&format!("solidcraft --control {port}")), "{e}");
     let batch = crate::call_tool(&mut remote, "batch", &json!({"commands": [{"command": "solid.box"}]}));
@@ -3707,16 +3707,16 @@ fn auto_session_bridges_to_a_late_app_only_while_empty() {
     let text = |r: &Value| r["result"]["content"].as_array().unwrap().iter().filter_map(|c| c["text"].as_str()).collect::<Vec<_>>().join("\n");
 
     let r = raw_tool(&mut s, "list_commands", json!({}));
-    assert!(text(&r).contains("headless session because the SolidCraft app was not found"), "{r}");
+    assert!(text(&r).contains("headless session because the FABER app was not found"), "{r}");
     let init = call(&mut s, 1, "initialize", json!({}));
-    assert!(init["result"]["instructions"].as_str().unwrap().contains("was not running when this server started"));
+    assert!(init["result"]["instructions"].as_str().unwrap().contains("FABER app was not running when this server started"));
 
     // The app appears while the session is empty: the next call goes to it.
     port.set(Some(1));
     let r = raw_tool(&mut s, "inspect_design", json!({}));
     assert!(!text(&r).contains("headless session because"), "{r}");
     assert!(s.backend().has_ui());
-    assert!(s.backend().describe().contains("connected to the SolidCraft app"));
+    assert!(s.backend().describe().contains("FABER app"));
     // The headless session's `--param-check` level goes on checking the bridged calls.
     let mut headless = Headless::default();
     headless.session.param_check = solidcraft_engine::schema::ParamCheck::Strict;
@@ -3739,7 +3739,7 @@ fn auto_session_bridges_to_a_late_app_only_while_empty() {
     assert_ne!(r["result"]["isError"], json!(true), "{r}");
     port.set(Some(1));
     let r = raw_tool(&mut s, "inspect_design", json!({}));
-    assert!(text(&r).contains("headless session because the SolidCraft app was not found"), "{r}");
+    assert!(text(&r).contains("headless session because the FABER app was not found"), "{r}");
     assert!(!s.backend().has_ui());
 }
 

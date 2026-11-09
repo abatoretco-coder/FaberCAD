@@ -22,7 +22,7 @@
 //!
 //! Done within the app's wait ([`crate::dialogs::APPLY_AT_ONCE`]), a request just runs, as
 //! before. Headless use, tests and the web build ([`SolveApp::apply_off_thread`] unset) run
-//! everything at once, and so does the app unless the preference is on (Preferences > AI,
+//! everything at once, and so does the app unless the preference is on (Preferences > External control,
 //! `agent_off_thread`, off by default).
 
 use std::sync::Arc;

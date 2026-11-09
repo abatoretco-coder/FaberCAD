@@ -485,9 +485,9 @@ fn with_ai_features_off_nothing_of_the_chat_shows_or_runs() {
 }
 
 #[test]
-fn ai_features_and_the_toolbar_button_are_on_by_default() {
+fn embedded_ai_features_are_off_by_default() {
     let p = crate::prefs::Prefs::default();
-    assert!(p.ai_features && p.ai_toolbar_button);
+    assert!(!p.ai_features && p.ai_toolbar_button);
 }
 
 /// Pop out puts the chat in its own window (a native window on the desktop, which can go to

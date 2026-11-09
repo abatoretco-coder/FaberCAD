@@ -1,0 +1,17 @@
+{
+  "commands": [
+    {"command":"file.new","params":{"name":"FABER collision reference"}},
+    {"command":"component.create","params":{"name":"Frame"}},
+    {"command":"solid.box","params":{"body_name":"Fixed cube","corner":[0,0,0],"length":10,"width":10,"height":10}},
+    {"command":"component.activate","params":{"component":"root"}},
+    {"command":"component.create","params":{"name":"Slider"}},
+    {"command":"solid.box","params":{"body_name":"Moving cube","corner":[20,0,0],"length":10,"width":10,"height":10}},
+    {"command":"component.activate","params":{"component":"root"}},
+    {"command":"occurrence.ground","params":{"occurrence":"Frame:1","grounded":true}},
+    {"command":"joint.as_built","params":{"name":"Travel","type":"slider","a":"Frame","b":"Slider","at":{"occurrence":"Frame","point":[20,0,0],"z":[-1,0,0]},"limits":[[0,15]],"quiet":true}},
+    {"command":"motion.study","params":{"name":"Clear","steps":5,"keys":[{"joint":"Travel","points":[[0,0],[5,5]]}]}},
+    {"command":"motion.interference","params":{"study":"Clear","samples":6}},
+    {"command":"motion.study","params":{"name":"Collision","steps":15,"keys":[{"joint":"Travel","points":[[0,0],[15,15]]}]}},
+    {"command":"motion.interference","params":{"study":"Collision","samples":16}}
+  ]
+}

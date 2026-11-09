@@ -1,0 +1,47 @@
+{
+  "name": "FABER source checks (no native build)",
+  "on": {
+    "push": {
+      "branches": [
+        "main"
+      ]
+    },
+    "pull_request": {},
+    "workflow_dispatch": {}
+  },
+  "permissions": {
+    "contents": "read"
+  },
+  "concurrency": {
+    "group": "faber-source-${{ github.workflow }}-${{ github.ref }}",
+    "cancel-in-progress": true
+  },
+  "jobs": {
+    "source-checks": {
+      "name": "Bounded source checks; native tests not executed",
+      "runs-on": "ubuntu-24.04",
+      "timeout-minutes": 5,
+      "steps": [
+        {
+          "uses": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "with": {
+            "fetch-depth": 2,
+            "persist-credentials": false
+          }
+        },
+        {
+          "name": "Source checks: 180 seconds / 1 GiB / one CPU",
+          "env": {
+            "FABER_BASE": "${{ github.event.pull_request.base.sha || github.event.before || 'HEAD^' }}"
+          },
+          "run": "set -eu\n# The service gets its own kernel-enforced cgroup before Python starts.\nsudo systemd-run --wait --pipe --collect --quiet --service-type=exec --expand-environment=no --unit=\"faber-ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}\" --uid=\"$(id -u)\" --gid=\"$(id -g)\" --working-directory=\"$GITHUB_WORKSPACE\" --setenv=PATH=\"$PATH\" --setenv=HOME=\"$HOME\" --setenv=RUSTUP_HOME=\"${RUSTUP_HOME:-$HOME/.rustup}\" --setenv=CARGO_HOME=\"${CARGO_HOME:-$HOME/.cargo}\" --setenv=PYTHONDONTWRITEBYTECODE=1 --setenv=FABER_FETCH_BASE=1 --property=MemoryMax=1073741824 --property=MemorySwapMax=0 --property=CPUQuota=100% --property=TasksMax=64 --property=RuntimeMaxSec=180 --property=TimeoutStopSec=5 --property=KillMode=control-group --property=OOMPolicy=kill /usr/bin/python3 scripts/faber_ci.py check --base \"$FABER_BASE\""
+        },
+        {
+          "name": "Record the exact validation scope",
+          "if": "always()",
+          "run": "if [ -f target/faber-ci/report.json ]; then\n  printf '### FABER source checks\\nNative business tests are NOT certified by this job.\\n```json\\n' >> \"$GITHUB_STEP_SUMMARY\"\n  head -c 12000 target/faber-ci/report.json >> \"$GITHUB_STEP_SUMMARY\"\n  printf '\\n```\\n' >> \"$GITHUB_STEP_SUMMARY\"\nelse\n  printf 'FABER checks did not complete. No native-test verdict.\\n' >> \"$GITHUB_STEP_SUMMARY\"\nfi"
+        }
+      ]
+    }
+  }
+}

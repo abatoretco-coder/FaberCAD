@@ -54,6 +54,7 @@ pub mod dialogs_surface;
 pub mod dialogs_sweep;
 mod dialogs_thread;
 pub mod dialogs_view_dxf;
+pub mod dialogs_workshop;
 pub mod dim_view;
 #[cfg(test)]
 mod dimension_create_ui_tests;
@@ -63,6 +64,7 @@ pub mod drag_snap;
 pub mod easyprint_ui;
 pub mod edit_clipboard;
 pub mod edit_in_place;
+pub mod external_control;
 mod feature_edit;
 #[cfg(test)]
 mod font_literals_tests;
@@ -1289,6 +1291,11 @@ impl SolveApp {
     pub fn with_control(mut self, rx: Receiver<ControlRequest>) -> Self {
         self.control_rx = Some(rx);
         self
+    }
+
+    /// The desktop host installed the local control channel used by bridged MCP clients.
+    pub(crate) fn external_control_available(&self) -> bool {
+        self.control_rx.is_some()
     }
 
     /// Run a command programmatically (JSON parameters, no dialogs).

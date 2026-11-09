@@ -15,6 +15,7 @@ pub(super) fn command(kind: &Kind) -> Option<&'static str> {
             crate::dialogs_motion::Mo::Configurations { .. } => "config.table",
         }),
         Kind::Part(_) => Some("parts.insert"),
+        Kind::Workshop(_) => Some("workshop.library"),
         Kind::PartSize(_) => Some("parts.resize"),
         Kind::SaveMesh(k) => Some(crate::dialogs_save_mesh::command_id(k)),
         Kind::ViewDxf { .. } => Some("file.export_view_dxf"),
@@ -380,7 +381,7 @@ pub(super) fn rows(app: &mut SolveApp, ctx: &egui::Context, d: &mut Dialog, ui: 
     if crate::hole_refs::takes(d) {
         // Each reference edge with its distance (#37, #6380).
         enter |= crate::hole_refs::input_rows(d, ui, &app.session, app.preferences.origin_plane_names, app.preferences.length_decimals);
-    } else {
+    } else if !matches!(&d.kind,Kind::Workshop(k) if !crate::dialogs_workshop::needs_picks(k)) {
         input_rows(d, ui, &app.session, app.preferences.origin_plane_names);
     }
     d.sync_material(&app.session);
@@ -391,6 +392,7 @@ pub(super) fn rows(app: &mut SolveApp, ctx: &egui::Context, d: &mut Dialog, ui: 
         Kind::Appearance(k) => enter |= crate::dialogs_appearance::rows(app, ui, k, &mut d.inputs),
         Kind::Motion(k) => enter |= crate::dialogs_motion::rows(app, ui, k, &mut d.inputs),
         Kind::Part(k) => enter |= crate::dialogs_parts::rows(app, ui, k, &d.inputs),
+        Kind::Workshop(k) => enter |= crate::dialogs_workshop::rows(app, ui, k, &mut d.inputs),
         Kind::PartSize(k) => enter |= crate::dialogs_part_size::rows(app, ui, k),
         Kind::SaveMesh(k) => enter |= crate::dialogs_save_mesh::rows(app, ui, k, &mut d.inputs),
         Kind::ViewDxf { dashed, tolerance } => crate::dialogs_view_dxf::rows(app, ui, dashed, tolerance),

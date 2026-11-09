@@ -5,6 +5,16 @@ description: Use when someone wants to contribute code or documentation to Solid
 
 # Contribute to SolidCraft
 
+## FABER owner override (2026-11-09)
+
+Use `python scripts/faber_ci.py` for routine validation: 180 seconds / 1 GiB,
+changed sources only. This supersedes every full-CI-before-commit instruction
+in this skill and its upstream references. Do not compile native/workspace tests,
+run browser suites or restore archived workflows without a new explicit owner
+request. Always distinguish source checks from product tests and artifact probes.
+See [FABER CI](../../docs/faber/CI.md). Do not publish based on source checks alone.
+
+
 Read [CONTRIBUTING.md](../../CONTRIBUTING.md), [AGENTS.md](../../AGENTS.md) (the router
 to the other skills), the [contributor book page](../../docs/book/src/dev/contributing.md),
 and the [skills index](../README.md) first. Follow their current rules; use this skill to

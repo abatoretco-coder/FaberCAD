@@ -19,7 +19,7 @@ pub struct State {
 
 /// Start managing the client files for this run (the desktop app's normal launch).
 pub fn begin(app: &mut SolveApp) {
-    app.ai_connect.armed = !cfg!(target_arch = "wasm32");
+    app.ai_connect.armed = crate::external_control::EMBEDDED_ASSISTANT && !cfg!(target_arch = "wasm32");
 }
 
 /// The clients already announced, so a client is named once however often its entry is made again.
@@ -147,10 +147,10 @@ mod tests {
     }
 
     #[test]
-    fn it_is_on_by_default_and_saved_off_stays_off() {
-        assert!(crate::prefs::Prefs::default().connect_ai_apps);
+    fn it_is_off_by_default_and_saved_on_stays_on() {
+        assert!(!crate::prefs::Prefs::default().connect_ai_apps);
         let mut app = SolveApp::new(Default::default(), Default::default());
-        app.load_prefs(&serde_json::json!({ "preferences": { "connect_ai_apps": false } }).to_string());
-        assert!(!app.preferences.connect_ai_apps);
+        app.load_prefs(&serde_json::json!({ "preferences": { "connect_ai_apps": true } }).to_string());
+        assert!(app.preferences.connect_ai_apps);
     }
 }

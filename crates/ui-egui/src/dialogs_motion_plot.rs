@@ -284,7 +284,7 @@ fn collision_rows(
             let hits = v["collisions"].as_array().cloned().unwrap_or_default();
             ui.vertical(|ui| {
                 ui.vertical(|ui| {
-                    if hits.is_empty() {
+                    if collision_check_is_clear(v) {
                         ui.label(RichText::new(crate::i18n::tr("motion.no_collisions")).color(t.text_dim));
                     }
                     for (i, c) in hits.iter().enumerate() {
@@ -322,6 +322,11 @@ fn collision_rows(
         }
         None => {}
     }
+}
+
+/// An empty partial result is not evidence that the entire study is clear.
+fn collision_check_is_clear(v: &Value) -> bool {
+    v["clear"] == true && v["truncated"] != true && v["collisions"].as_array().is_some_and(Vec::is_empty)
 }
 
 /// The Plot rows: what to chart, and the chart (a click on it moves the step).
@@ -395,6 +400,15 @@ fn plot_rows(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn only_a_complete_clear_collision_check_reports_no_collisions() {
+        assert!(collision_check_is_clear(&json!({"clear": true, "truncated": false, "collisions": []})));
+        assert!(!collision_check_is_clear(&json!({"clear": false, "truncated": true, "checked_to": 0, "collisions": []})));
+        assert!(!collision_check_is_clear(&json!({"clear": true, "truncated": true, "collisions": []})));
+        assert!(!collision_check_is_clear(&json!({"clear": false, "truncated": false, "collisions": [{"a": "A", "b": "B"}]})));
+        assert!(!collision_check_is_clear(&json!({})));
+    }
 
     /// The chart's line: a joint's quantity with its unit, or a point's distance from its start.
     #[test]

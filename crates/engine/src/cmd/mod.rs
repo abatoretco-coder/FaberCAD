@@ -85,6 +85,7 @@ mod point_cloud;
 mod script;
 mod section;
 pub mod settings;
+mod workshop;
 pub(crate) use clipboard::{component_path_form, copy_keys};
 pub(crate) use component::matrix::{rigid as rigid_matrix, tolerance as matrix_tolerance};
 pub(crate) use component::{base_transform, move_vector};
@@ -353,6 +354,7 @@ pub fn command_specs() -> Vec<&'static CommandSpec> {
     v.extend(panels::COMMANDS.iter());
     v.extend(config::COMMANDS.iter());
     v.extend(parts::COMMANDS.iter());
+    v.extend(workshop::COMMANDS.iter());
     v.extend(bom::COMMANDS.iter());
     v.extend(mass_properties::COMMANDS.iter());
     v.extend(browser::COMMANDS.iter());

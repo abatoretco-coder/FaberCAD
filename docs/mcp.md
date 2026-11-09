@@ -36,8 +36,8 @@ solidcraft-cli mcp --connect 127.0.0.1:7878
 ### The app listens by default
 
 The desktop app opens its control channel at start-up on `127.0.0.1:27878` (or the next free port
-when that one is taken), unless Preferences > Assistant > "Let AI agents connect (control
-channel / MCP)" is off; the setting takes effect at the next start. It is reachable from this
+when that one is taken), unless Preferences > External control > "Enable MCP access at startup"
+is off; the setting takes effect at the next start. It is reachable from this
 computer only, and every connection must show the token made fresh for that launch, readable only
 by your user account ([control-protocol.md](control-protocol.md#token)). The app writes the port to
 `control/current.port` in the same folder as its token file; `solidcraft-cli mcp` with no
@@ -155,8 +155,8 @@ file dialogs are never limited.
 Compact output is for agents that pay for every byte. It is off by default, and then every tool
 behaves as described below. Any one of these turns it on:
 
-- **Preferences › AI › Agents through MCP › Compact output** in the app, for every server bridged
-  to it (`--connect`, and the agents its chat starts). The server asks the app (`mcp.options` on
+- **Preferences › External control › Compact output** in the app, for every server bridged
+  to it with `--connect`. The server asks the app (`mcp.options` on
   the [control channel](control-protocol.md)) when the agent first lists or calls a tool, and
   keeps the answer for the session, so the tools it listed keep their shape: a change applies to
   agent sessions started after it. An app that is not running yet is asked again on the next call.
@@ -196,7 +196,9 @@ not read-only, `destructiveHint` and `openWorldHint` are true.
 
 `solidcraft-cli` is on `PATH` after every package install: the Windows installer adds its folder, the deb, rpm and FreeBSD packages install it in `/usr/bin`, the Homebrew cask links it, the AppImage writes a small `solidcraft-cli` launcher into `~/.local/bin` on its first run, and the macOS app links it into `/opt/homebrew/bin` or `/usr/local/bin` when it starts (Help > Install solidcraft-cli command does it with an administrator prompt when those are not writable). Two packages keep it out of `PATH` by design: Snap exposes it as `solidcraft.cli`, and Flatpak runs it as `flatpak run --command=solidcraft-cli io.tangencylabs.solidcraft`; use those as the client's `command` (with `mcp` as the arguments).
 
-The quickest way: **Help > Connect AI assistants…** in the app, or
+The **Preferences > External control** page shows the command to add to Codex or another MCP
+client. Configuration remains owned by that separate client. An explicit command-line setup is
+also available:
 
 ```sh
 solidcraft-cli mcp setup            # every client found on this computer
@@ -230,11 +232,8 @@ After an update moves the program, running setup again only refreshes the path o
 An entry you changed (extra arguments, another program) is left as you have it. `--live` also adds `solidcraft-live`, which bridges to the open app (port
 7878, see below). Restart the client afterwards.
 
-SolidCraft also does this by itself: when the app starts it adds the `solidcraft` entry to each
-installed client (and refreshes its path after an update), and says once which clients it
-connected. It never touches an entry you changed. **Settings > Assistant > Make SolidCraft
-available to AI apps on this computer** turns it off, which removes the entries it added. Runs
-with `--control` or `SOLIDCRAFT_CONTROL_PORT` (automation) leave your clients alone.
+FABER does not alter Codex or other client configuration when it starts. The explicit
+`solidcraft-cli mcp setup` command above is retained for users who choose that convenience.
 
 To configure a client by hand instead, these are the entries. OpenCode (`opencode.json`):
 

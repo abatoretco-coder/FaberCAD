@@ -879,9 +879,9 @@ enum Outcome {
     Permission { key: u64, title: String, kind: Option<String>, options: Vec<PermissionOption> },
 }
 
-/// The AI features are on (the master switch in Settings → AI) and this is the desktop app.
+/// The upstream embedded assistant is available only to its test harness in FABER.
 pub fn shown(app: &SolveApp) -> bool {
-    app.preferences.ai_features && cfg!(not(target_arch = "wasm32"))
+    crate::external_control::EMBEDDED_ASSISTANT && app.preferences.ai_features && cfg!(not(target_arch = "wasm32"))
 }
 
 /// The Assistant button in the application bar is shown (honours the existing preference).

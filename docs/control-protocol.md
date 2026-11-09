@@ -455,7 +455,7 @@ evidence description, and clear the fixture before checking real capabilities.
 | Launch | What listens |
 |---|---|
 | `solidcraft --control PORT`, or `SOLIDCRAFT_CONTROL_PORT=PORT` | exactly `127.0.0.1:PORT` (the flag wins over the variable), whatever the setting |
-| neither, and Preferences > Assistant > "Let AI agents connect (control channel / MCP)" on (the default) | the default port **27878**, or the next free one up to 27893 when it is taken (a second window, another program) |
+| neither, and Preferences > External control > "Enable MCP access at startup" on (the default) | the default port **27878**, or the next free one up to 27893 when it is taken (a second window, another program) |
 | neither, and the setting off | nothing |
 
 The setting is read at start-up. Old preference files, which don't have it, load with it on. A
@@ -619,7 +619,7 @@ reply without `param_check` as unchecked. The bridged MCP server asks once per c
 | `document.revision` | — | `{document_id, revision}`: the active design's id and a number that moves whenever the design changes, for programs that follow it ([Following the design](#following-the-design)) |
 | `control.subscribe` | — | `{document_id, revision}`, as `document.revision`; the connection is then sent a `design.changed` line whenever they change ([Following the design](#following-the-design)) |
 | `document.inspect` | `measure?`: bool, `sketch_counts?`: bool (default false) | parameters, timeline (errors, timings), bodies, sketches, selection (assembly joints: `engine.execute` `joint.inspect {joint?}`, which reads only: each joint's two origins with the occurrence, the snap as saved, the feature, face, edge or sketch curve its names refer to, and whether it resolves or why not; kind, offset, angle, flip, values, limits, expressions and motion links); with `sketch_counts` each sketch also gives its `plane` and its number of `points` and `constraints` |
-| `mcp.options` | — | `{"compact": bool}`: the output the MCP server bridged to this app should give its agents (Preferences › AI › Agents through MCP, `ui.prefs` `mcp_compact`, default false; [MCP](mcp.md#compact-output)) |
+| `mcp.options` | — | `{"compact": bool}`: the output the MCP server bridged to this app should give its agents (Preferences › External control, `ui.prefs` `mcp_compact`, default false; [MCP](mcp.md#compact-output)) |
 | `document.export` | — | `{name, revision, dirty, format, text}`: the active design as its file holds it, for a host that keeps the files itself ([browser command API](browser-api.md)). `text` is the design's JSON, what a `.json` design file holds; `format` is `"json"`; `revision` is the one `document.revision` answers for this state. Only reads |
 | `document.import` | `text`: a design's JSON; `name?`: the name it takes | `{name, features, errors, revision}`: replaces the active design with `text`, timeline and parameters as saved; it opens saved, with a new `document_id` and nothing to undo. It does not ask about unsaved changes in the design it replaces: that is the caller's to decide. A text that does not read changes nothing. Waits behind a file loading or a design change, and evaluates on the window thread in the frame it runs |
 | `document.saved` | `revision`: as `document.export` gave it | `{revision, dirty}`: the host saved the design at that revision, so it counts as saved from there. Refused when the design has changed since |
@@ -721,7 +721,7 @@ sends it a line whenever the active design changes (#6985):
 
 ### Slow commands and the window (#1989)
 
-With the preference **Preferences > AI > Keep the window responsive while agents run commands**
+With the preference **Preferences > External control > Keep FABER responsive during long commands**
 on (`ui.prefs {"agent_off_thread": true}`; off by default), a design change in the desktop app
 that takes longer than about 150 ms (an `engine.execute` of a
 modelling command, an `engine.batch` of them) computes off the window thread, so the window keeps
@@ -932,7 +932,7 @@ One setting per line, sorted by name. A change that adds a setting adds its own 
 - `look_at_speed`
 - `max_design_file_mb` (default 256): the largest design file opened, in MB, from the default up to 16384 (16 GB) (Preferences › General › Largest file to open, #4086; a `--max-file-size` launch flag overrides both for that run; the web app keeps the defaults and refuses other values; [large files](book/src/guide/files.md#large-files))
 - `max_step_file_mb` (default 512): the largest STEP or import file opened, in MB, from the default up to 16384 (16 GB) (Preferences › General › Largest file to open, #4086; a `--max-file-size` launch flag overrides both for that run; the web app keeps the defaults and refuses other values; [large files](book/src/guide/files.md#large-files))
-- `mcp_compact` (default false): compact tool output for agents bridged to this app through the MCP server (Preferences › AI › Agents through MCP; the server reads it with `mcp.options`; [MCP compact output](mcp.md#compact-output))
+- `mcp_compact` (default false): compact tool output for agents bridged to this app through the MCP server (Preferences › External control; the server reads it with `mcp.options`; [MCP compact output](mcp.md#compact-output))
 - `middle_double_click` (`home` (default), `fit`, `off`)
 - `msaa`
 - `nav` (`fusion`, `solidworks`, `creo`, `inventor`, `alias`, `blender`, `tinkercad`, `openscad`, `touchpad`)
@@ -1027,7 +1027,7 @@ and output schema types live in `solidcraft_engine::schema::ui_prefs` (`PrefsPar
 
 Other `ui.prefs` parameters:
 
-- `open` opens Preferences at General; Look: Appearance, Layout, Graphics; Work: Design, Sketch, Tools; Input: Navigation, 3D mouse, Shortcuts; or Extend: Assistant, Plugins. Names are case-insensitive. Legacy aliases remain accepted: Interface → Appearance, Interface/navigation bar → Layout, Keyboard Shortcuts → Shortcuts, AI → Assistant, and Selection, Sketch & selection or Sketch and selection → Sketch. Replies use the canonical page name. The corresponding legacy `prefs:page:<name>` scenario handles also remain aliases of the canonical page rows.
+- `open` opens Preferences at General; Look: Appearance, Layout, Graphics; Work: Design, Sketch, Tools; Input: Navigation, 3D mouse, Shortcuts; or Extend: External control, Plugins. Names are case-insensitive. Legacy aliases remain accepted: Interface → Appearance, Interface/navigation bar → Layout, Keyboard Shortcuts → Shortcuts, Assistant, AI or Codex → External control, and Selection, Sketch & selection or Sketch and selection → Sketch. Replies use the canonical page name. The corresponding legacy `prefs:page:<name>` scenario handles also remain aliases of the canonical page rows.
 - `button`: `ok`, `cancel`, `apply`, `defaults`
 - `stand_up: true` stands up a just-opened Y-up file, `stand_up: false` leaves it as it is ("Leave it": the offer, dialog or note, closes and `offer_stand_up` stays on)
 - the dialog's buttons are the handles `stand_up:stand`, `stand_up:leave` and `stand_up:never`

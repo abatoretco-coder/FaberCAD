@@ -44,7 +44,7 @@ pub fn diagnostics(app: &SolveApp) -> String {
 /// Whether a Help menu item can run now: behind an open bug report, the items that open a
 /// window would cover it (#7188). Report an Issue… shows the report.
 pub fn available(app: &SolveApp, item: &str) -> bool {
-    app.issue_report.draft.is_none() || !matches!(item, "about" | "shortcuts" | "messages" | "crashes" | "connect" | "updates")
+    app.issue_report.draft.is_none() || !matches!(item, "about" | "shortcuts" | "messages" | "crashes" | "connect" | "external_control" | "updates")
 }
 
 /// Run a Help menu item: `docs`, `about`, `updates`, `version` (the release notes), `shortcuts`, `messages`, `report`, `crashes`,
@@ -67,6 +67,7 @@ pub fn run(app: &mut SolveApp, ctx: &egui::Context, item: &str) {
         }
         "crashes" => crate::crash_ui::open(app),
         "connect" => app.help.connect = Some(connect_assistants()),
+        "external_control" => crate::prefs::open_at(app, crate::prefs::PAGE_ASSISTANT),
         "install_cli" => {
             let (msg, error) = crate::cli_link::install_from_menu();
             app.set_status(msg, error);
@@ -141,7 +142,7 @@ pub fn show(app: &mut SolveApp, ctx: &egui::Context, anchor: egui::Pos2) {
                         ("messages", "Messages…", "list"),
                         ("report", "Report an Issue…", "bug_report"),
                         ("crashes", "Crash Reports…", "status_error"),
-                        ("connect", "Connect AI assistants…", "settings"),
+                        ("external_control", crate::i18n::tr("faber.external_control.menu"), "settings"),
                         ("install_cli", "Install solidcraft-cli command", "settings"),
                     ]
                     .into_iter()

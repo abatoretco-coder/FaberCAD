@@ -245,6 +245,14 @@ impl Env {
             for k in ["ProgramFiles", "ProgramFiles(x86)", "ProgramW6432"] {
                 env.install_dirs.extend(var(k));
             }
+            // FABER installations commonly keep desktop applications on D:.
+            // These are bounded application roots, never a recursive drive scan.
+            for root in [r"D:\Program Files", r"D:\Program Files (x86)"] {
+                let root = PathBuf::from(root);
+                if root.is_dir() && !env.install_dirs.contains(&root) {
+                    env.install_dirs.push(root);
+                }
+            }
             if let Some(local) = var("LOCALAPPDATA") {
                 env.install_dirs.push(local.join("Programs"));
                 env.install_dirs.push(local);

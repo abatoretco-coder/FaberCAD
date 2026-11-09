@@ -1,0 +1,15 @@
+{
+  "commands": [
+    {"command":"file.new","params":{"name":"FABER workshop qualification"}},
+    {"command":"wood.board","params":{"name":"Pine shelf","material":"pine","length_mm":600,"width_mm":300,"thickness_mm":18,"grain":"length"}},
+    {"command":"wood.board","params":{"name":"Plywood back","material":"birch_plywood","length_mm":600,"width_mm":400,"thickness_mm":5,"grain":"width"}},
+    {"command":"print.part","params":{"name":"Mounting plate","template":"mounting_plate","length_mm":60,"width_mm":30,"thickness_mm":6,"hole_diameter_mm":4.5}},
+    {"command":"print.part","params":{"name":"Spacer","template":"spacer","length_mm":16,"width_mm":16,"thickness_mm":8,"hole_diameter_mm":5}},
+    {"command":"print.part","params":{"name":"Angle bracket","template":"angle_bracket","length_mm":40,"width_mm":20,"thickness_mm":4,"hole_diameter_mm":3}},
+    {"command":"parts.insert","params":{"family":"hex_nut","size":"M4","point":[80,50,0]}},
+    {"command":"print.check","params":{"bodies":["Mounting plate PLA"],"printer":"bambu_a1_04","layer_height_mm":0.2,"line_width_mm":0.42,"bed_margin_mm":3}},
+    {"command":"assembly.bom","params":{"path":"target/workshop/bom.json"}},
+    {"command":"file.export","params":{"path":"target/workshop/mounting-plate.stl","bodies":["Mounting plate PLA"]}},
+    {"command":"file.export","params":{"path":"target/workshop/mounting-plate.3mf","bodies":["Mounting plate PLA"]}}
+  ]
+}

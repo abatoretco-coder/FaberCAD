@@ -69,7 +69,7 @@ pub fn start(listen_on: control_auth::Listen, ctx: egui::Context) -> Receiver<Co
                     if let Some(port) = listen_on_listener(l, token.clone(), tx, ctx, false) {
                         if matches!(listen_on, control_auth::Listen::Default) {
                             solidcraft_engine::note!(
-                                "solidcraft: control channel on the default port 127.0.0.1:{port} (Preferences > Assistant turns it off)"
+                                "solidcraft: control channel on the default port 127.0.0.1:{port} (Preferences > External control turns it off)"
                             );
                         }
                         // The discovery file: where `solidcraft-cli mcp` finds this app with no arguments.

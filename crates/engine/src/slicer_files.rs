@@ -1,8 +1,10 @@
 //! The files sent to a slicer: a private per-user folder, a name that stays the same for the same
 //! design and bodies (so sending again replaces the file and the slicer's "Reload from disk"
-//! picks it up), writes that never leave half a file behind, and a sweep of old files.
+//! picks it up), completed writes before handoff, and a sweep of old files. Encrypted Windows
+//! folders that refuse rename use fresh copies instead of replacing the previous export.
 
 use std::io;
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime};
 
@@ -65,15 +67,50 @@ pub fn stem(design: &str, path: Option<&str>, uid: u64, bodies: &[String]) -> St
 /// Write `bytes` as `<stem>.<ext>` in `dir`: to a temporary name first, then renamed over the
 /// file, so the slicer never reads half a file. When the name can't be replaced (Windows keeps a
 /// file the slicer has open locked) the next free `<stem>-2.<ext>`, … is used; the flag says so.
+/// Encrypted Windows folders refusing sibling rename use a new synced file instead; handoff
+/// still waits for completion, but external folder watchers do not get atomic visibility.
 pub fn write(dir: &Path, stem: &str, ext: &str, bytes: &[u8]) -> io::Result<(PathBuf, bool)> {
+    write_with(dir, stem, ext, bytes, |a, b| std::fs::rename(a, b))
+}
+
+fn write_with(
+    dir: &Path,
+    stem: &str,
+    ext: &str,
+    bytes: &[u8],
+    mut rename: impl FnMut(&Path, &Path) -> io::Result<()>,
+) -> io::Result<(PathBuf, bool)> {
     make_private(dir)?;
     let tmp = dir.join(format!(".{stem}.{ext}.{}.tmp", std::process::id()));
     std::fs::write(&tmp, bytes)?;
     let mut failure = None;
     for n in 1..=MAX_COPIES {
         let target = dir.join(if n == 1 { format!("{stem}.{ext}") } else { format!("{stem}-{n}.{ext}") });
-        match std::fs::rename(&tmp, &target) {
+        match rename(&tmp, &target) {
             Ok(()) => return Ok((target, n > 1)),
+            // Some encrypted Windows cache folders reject both rename and hard links with
+            // ERROR_NOT_SAME_DEVICE, even between siblings. Publish a NEW numbered copy;
+            // never truncate the previous export. The caller launches the slicer only after
+            // this file has been completely written and synced. This fallback is not an
+            // atomic rename for independent folder watchers.
+            Err(e) if cfg!(windows) && e.kind() == io::ErrorKind::CrossesDevices => {
+                let nonce = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap_or_default().as_nanos();
+                let target = dir.join(format!("{stem}-{}-{nonce}-{n}.{ext}", std::process::id()));
+                match std::fs::OpenOptions::new().write(true).create_new(true).open(&target) {
+                    Ok(mut file) => {
+                        let result = file.write_all(bytes).and_then(|()| file.sync_all());
+                        drop(file);
+                        if let Err(error) = result {
+                            let _ = std::fs::remove_file(&target);
+                            let _ = std::fs::remove_file(&tmp);
+                            return Err(error);
+                        }
+                        let _ = std::fs::remove_file(&tmp);
+                        return Ok((target, true));
+                    }
+                    Err(error) => failure = Some(error),
+                }
+            }
             Err(e) => failure = Some(e),
         }
     }
@@ -109,6 +146,24 @@ pub fn clean_old() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(windows)]
+    #[test]
+    fn encrypted_cache_fallback_preserves_the_previous_export() {
+        let dir = scratch("encrypted");
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join("part.3mf"), b"previous").unwrap();
+        let (path, numbered) = write_with(&dir, "part", "3mf", b"new complete mesh", |_, _| Err(io::Error::from_raw_os_error(17))).unwrap();
+        assert!(numbered);
+        assert_ne!(path, dir.join("part.3mf"));
+        assert_eq!(std::fs::read(dir.join("part.3mf")).unwrap(), b"previous");
+        assert_eq!(std::fs::read(path).unwrap(), b"new complete mesh");
+        assert_eq!(std::fs::read_dir(&dir).unwrap().count(), 2);
+        for _ in 0..12 {
+            write_with(&dir, "part", "3mf", b"another complete export", |_, _| Err(io::Error::from_raw_os_error(17))).unwrap();
+        }
+        std::fs::remove_dir_all(dir).unwrap();
+    }
 
     fn scratch(tag: &str) -> PathBuf {
         let d = std::env::temp_dir().join(format!("solidcraft-slicer-files-{tag}-{}", std::process::id()));

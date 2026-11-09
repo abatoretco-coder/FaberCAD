@@ -674,12 +674,12 @@ impl Backend for Remote {
     }
     fn describe(&self) -> String {
         if self.conn.is_some() {
-            format!("connected to the SolidCraft app at {} (the user watches the viewport)", self.addr)
+            format!("connected to the FABER app at {} (the user watches the viewport)", self.addr)
         } else {
-            // Still "connected to the SolidCraft app": the skills tell bridged from headless by it.
+            // Still identifies the FABER app: the skills tell bridged from headless by it.
             format!(
-                "connected to the SolidCraft app at {} once it runs (the user watches the viewport). It was not running \
-                 when this server started; until it is (`solidcraft --control {}`), tool calls say so",
+                "will connect to the FABER app at {} on the first tool call (the user watches the viewport); \
+                 until FABER is running (`solidcraft --control {}`), tool calls say so",
                 self.addr, self.port
             )
         }
@@ -865,7 +865,7 @@ impl Backend for Headless {
         false
     }
     fn describe(&self) -> String {
-        "headless in-process SolidCraft session".into()
+        "headless in-process FABER session".into()
     }
     fn design_path(&self) -> Option<String> {
         self.session.path.clone()
@@ -904,7 +904,7 @@ impl Auto {
             return;
         }
         if let Some(port) = (self.discover)() {
-            solidcraft_engine::note!("solidcraft mcp: the SolidCraft app is running now; bridged to 127.0.0.1:{port}");
+            solidcraft_engine::note!("solidcraft mcp: the FABER app is running now; bridged to 127.0.0.1:{port}");
             let level = self.param_check();
             self.remote = Some(Remote::new(&format!("127.0.0.1:{port}"), self.token.as_deref()).with_param_check(level));
             self.headless = None;
@@ -930,7 +930,7 @@ impl Backend for Auto {
         match (&self.remote, &self.headless) {
             (Some(r), _) => r.describe(),
             (None, Some(h)) => format!(
-                "{}, because the SolidCraft app was not running when this server started; if it starts before any design work \
+                "{}, because the FABER app was not running when this server started; if it starts before any design work \
                  is done here, the next call is bridged to it",
                 h.describe()
             ),
@@ -963,8 +963,8 @@ impl Backend for Auto {
     }
     fn notice(&self) -> Option<String> {
         self.headless.as_ref().map(|_| {
-            "Note: this is a headless session because the SolidCraft app was not found; the user cannot see this work. \
-             Ask them to start SolidCraft. While this session has no features, the next call connects to the app; once it \
+            "Note: this is a headless session because the FABER app was not found; the user cannot see this work. \
+             Ask them to start FABER. While this session has no features, the next call connects to the app; once it \
              has work, it stays here."
                 .to_owned()
         })

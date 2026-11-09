@@ -23,7 +23,6 @@ mod pending;
 mod render_assets;
 mod skills;
 mod test;
-mod test_nextest;
 mod ui_containers;
 mod web_offline;
 mod web_offline_test;
@@ -129,10 +128,8 @@ commands:
   web-offline-test [--site DIR]
                   check in headless Chrome that the web app works offline and updates to a new
                   build (a stand-in app, or the web build in DIR such as dist/web)
-  ci              fmt --check, assets, icons, licences --check, lists, skills, layers, ui-containers,
-                  mesh-decisions, clippy -D warnings, then the tests
-                  with the wasm check alongside, then web-offline-test when Chrome is installed
-                  (stops at the first failing step)
+  ci              disabled: use python scripts/faber_ci.py (no Cargo bootstrap)
+
 ";
 
 fn main() -> ExitCode {
@@ -164,7 +161,7 @@ fn main() -> ExitCode {
             let (cargo_args, test_args) = rest.iter().position(|a| *a == "--").map_or((&rest[..], &[][..]), |i| (&rest[..i], &rest[i + 1..]));
             test::run(cargo_args, test_args, vec![test::doc_tests(cargo_args, test_args)])
         }
-        Some("ci") => cmd_ci(),
+        Some("ci") => Err("FABER CI: use python scripts/faber_ci.py; native compilation is disabled by default".into()),
         Some("wasm") => cmd_wasm(),
         Some("web-offline") => web_offline::run(&root(), rest.first().copied()),
         Some("web-offline-test") => {
@@ -434,28 +431,4 @@ fn wasm_check() -> Result<(Command, usize), String> {
         c.args(["-p", p]);
     }
     Ok((c, set.len()))
-}
-
-/// The quick gates first, so they fail fast; the wasm check (and doc tests) run while the test
-/// binaries do, which leaves cargo's build lock free.
-fn cmd_ci() -> Result<(), String> {
-    let mut c = cargo();
-    c.args(["fmt", "--all", "--", "--check"]);
-    run(c, "cargo fmt --check")?;
-    assets::run(&root())?;
-    icons::run(&root())?;
-    licences::run(&root(), true)?;
-    lists::run(&root(), false)?;
-    skills::run(&root())?;
-    cmd_layers()?;
-    ui_containers::run(&root())?;
-    mesh_decisions::run(&root())?;
-    let mut c = cargo();
-    c.args(["clippy", "--workspace", "--all-targets", "--profile", "ci", "--", "-D", "warnings"]);
-    run(c, "cargo clippy -D warnings")?;
-    let (wasm, n) = wasm_check()?;
-    test_nextest::run_selected(vec![(format!("wasm32-unknown-unknown check ({n} crates)"), wasm), test::doc_tests(&[], &[])])?;
-    web_offline_test::run(&root(), None, false)?;
-    eprintln!("ci: all gates passed");
-    Ok(())
 }

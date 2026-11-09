@@ -177,7 +177,7 @@ fn spawn_wait(
 
 /// Run `file.send_to_slicer` and report what happened. A slicer that has to be started first is
 /// started and waited for in the background.
-fn send_to_slicer(app: &mut SolveApp, params: Value) {
+pub(crate) fn send_to_slicer(app: &mut SolveApp, params: Value) {
     let _language = crate::i18n::scope(&app.preferences.language);
     if let Some(wait) = &app.slicer_wait {
         // Whatever was picked this time (another slicer, other bodies): nothing else is sent.
@@ -626,11 +626,13 @@ fn report(app: &mut SolveApp, result: &Value) {
         None => match result.get("slicer").and_then(Value::as_str) {
             Some(s) => {
                 let mut line = match (result.get("numbered").and_then(Value::as_bool), std::path::Path::new(path).file_name()) {
-                    (Some(true), Some(file)) => crate::i18n::format("ui.sent_to_slicer_copy", &[("slicer", s), ("file", &file.to_string_lossy())]),
+                    (Some(true), Some(file)) => crate::i18n::format("ui.slicer_export_copy", &[("slicer", s), ("file", &file.to_string_lossy())]),
                     _ => crate::i18n::format("ui.sent_to_slicer", &[("slicer", s)]),
                 };
                 // Said once: sending the same bodies again overwrites the file the slicer has open.
-                if result.get("numbered").is_some() && !std::mem::replace(&mut app.preferences.slicer_resend_hint_seen, true) {
+                if result.get("numbered").and_then(Value::as_bool) == Some(false)
+                    && !std::mem::replace(&mut app.preferences.slicer_resend_hint_seen, true)
+                {
                     line = format!("{line}. {}", crate::i18n::tr("ui.slicer_resend_hint"));
                 }
                 if result.get("stl_fallback").and_then(Value::as_bool) == Some(true) {

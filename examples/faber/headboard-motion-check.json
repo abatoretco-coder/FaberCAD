@@ -1,0 +1,6 @@
+{
+  "commands": [
+    {"command":"motion.interference","params":{"study":"Headboard opening","occurrences":["TL-06G","TL-06D","TL-12G","TL-12D","TL-12CG","TL-12CD","TL-10G","TL-10D"],"against":["TL-01LG","TL-01CB","TL-01CH","TL-01LD","TL-02G","TL-02D","TL-03G","TL-03D","TL-04R","TL-04","TL-04B","TL-07C","TL-08G","TL-08D","TL-09GB","TL-09GH","TL-11G1","TL-09DB","TL-09DH","TL-11D1"],"samples":41,"budget_s":30}},
+    {"command":"motion.interference","params":{"study":"Headboard opening","occurrences":["TL-06G","TL-06D","TL-12G","TL-12D","TL-12CG","TL-12CD","TL-10G","TL-10D"],"samples":41,"budget_s":30}}
+  ]
+}

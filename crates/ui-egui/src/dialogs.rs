@@ -413,6 +413,7 @@ crate::dialog_descriptor::dialog_descriptors! {
             Motion(crate::dialogs_motion::Mo),
             /// Insert Part from the standard parts library (`dialogs_parts`).
             Part(crate::dialogs_parts::Pt),
+            Workshop(crate::dialogs_workshop::Workshop),
             PartSize(crate::dialogs_part_size::Resize),
             /// Edit Text: a sketch text's content and placement (`sketch_text`).
             Text(Box<crate::sketch_text::Tx>),
@@ -1127,6 +1128,7 @@ impl Dialog {
                     .or_else(|| crate::dialogs_appearance::start(app, id))
                     .or_else(|| crate::dialogs_motion::start(app, id))
                     .or_else(|| crate::dialogs_parts::start(app, id))
+                    .or_else(|| crate::dialogs_workshop::start(app, id))
                     .or_else(|| crate::dialogs_part_size::start(app, id))
                     .or_else(|| crate::sketch_text::start(app, id))
                     .or_else(|| crate::sketch_text_move::start(app, id))
@@ -2623,6 +2625,7 @@ fn title(k: &Kind) -> &'static str {
         Kind::Appearance(_) => "APPEARANCE",
         Kind::Motion(k) => k.title(),
         Kind::Part(_) => "INSERT PART",
+        Kind::Workshop(_) => "Workshop",
         Kind::PartSize(_) => "Change Part Size",
         Kind::Text(_) => "EDIT TEXT",
         Kind::TextMove(_) => "MOVE/COPY TEXT",
@@ -3725,6 +3728,8 @@ pub(crate) fn card_width(d: &Dialog) -> f32 {
     let t = Tokens::get();
     if matches!(d.kind, Kind::Appearance(_) | Kind::Material { .. }) {
         t.form_card_width + t.form_label_width + t.space_6
+    } else if matches!(d.kind, Kind::Workshop(_)) {
+        t.form_card_width * 2.0
     } else if matches!(&d.kind, Kind::Motion(k) if k.wide()) {
         t.form_card_width * 3.0
     } else {
@@ -6027,6 +6032,7 @@ fn dialog_commands(app: &SolveApp, d: &Dialog) -> Result<Vec<(String, Value)>, S
         Kind::Appearance(k) => return Ok(crate::dialogs_appearance::commands(k, &d.inputs)),
         Kind::Motion(k) => return crate::dialogs_motion::commands(app, k, &d.inputs),
         Kind::Part(k) => return crate::dialogs_parts::commands(app, k, &d.inputs),
+        Kind::Workshop(k) => return crate::dialogs_workshop::commands(app, k, &d.inputs),
         Kind::PartSize(k) => return crate::dialogs_part_size::commands(app, k),
         Kind::Text(k) => return crate::sketch_text::commands(app, k),
         Kind::TextMove(k) => return crate::sketch_text_move::commands(app, k),

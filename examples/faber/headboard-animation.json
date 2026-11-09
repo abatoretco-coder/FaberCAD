@@ -1,0 +1,5 @@
+{
+  "commands": [
+    {"command":"motion.export_animation","params":{"study":"Headboard opening","path":"target/headboard-comparison/headboard-opening.gif","samples":31,"width":960,"height":720,"fps":12,"grid":false,"axes":false,"camera":{"target":[0,175,700],"yaw":2.6,"pitch":0.3,"distance":2900}}}
+  ]
+}

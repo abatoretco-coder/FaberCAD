@@ -2,6 +2,15 @@
 
 SolidCraft is a clean-room, pure-Rust parametric 3D CAD app (sketch solver, feature timeline, B-rep kernel, an egui UI that agents drive). This file is a router: the hard rules, then the skill to read for your task. Humans: CONTRIBUTING.md.
 
+## FABER owner CI policy (2026-11-09; overrides inherited instructions)
+- Default validation is `python scripts/faber_ci.py`: changed sources only, no native builds.
+- Hard validation-tree ceiling: 180 seconds / 1024 MiB, locally and on GitHub; fail closed.
+- Never run workspace CI, native compilation, browser/wasm suites, releases or inherited
+  workflows automatically. Larger validation requires a new explicit owner request.
+- Report source checks and native product tests separately; quick green does not certify
+  native behavior or authorize publication. See `docs/faber/CI.md`.
+- Inherited full-CI-before-commit instructions below and in skills are superseded.
+
 ## Start here
 Work: ROADMAP.md, "Where help is wanted most" in CONTRIBUTING.md, issues labelled `help wanted`, `good first issue`, `needs-triage`; architecture in `docs/architecture.md`. Local `plan/` notes are optional.
 
@@ -28,7 +37,7 @@ Work: ROADMAP.md, "Where help is wanted most" in CONTRIBUTING.md, issues labelle
 - Code, comments, commit messages and docs are in English, always: `skills/solidcraft-contributing/SKILL.md` ("Working as an agent").
 - Independent work runs in parallel, dependent work stays sequential: `skills/solidcraft-contributing/SKILL.md` ("Working as an agent").
 - Show observable changes with real screenshots or a recording, captured yourself.
-- Run `cargo xtask ci` before every commit. `cargo xtask skills` keeps this file and `skills/` honest.
+- Run `python scripts/faber_ci.py` before commits and report native validation separately.
 
 ## Working on X: read the skill first
 | Working on | Read |

@@ -11,7 +11,7 @@ Work the part out as numbers first. Then build it in a few large `batch` calls, 
 ## Before the first call
 1. In SolidCraft's own chat or any MCP client, call `skill_reference {"skill":"solidcraft-modeling"}`. Elsewhere, read `reference.md`.
 2. Run `inspect_design {"measure":false,"sketches":false}`, even when you think the session is empty.
-   - The SolidCraft server's instructions end with `Backend: connected to the SolidCraft app` when it drives the user's open app, and with `Backend: headless` otherwise.
+   - The server's instructions name the `FABER app` when it drives the user's open app, and say `Backend: headless` otherwise.
    - If the design has timeline features, ask before calling `new_design` or `open`, because both discard unsaved work. You can also build into the open design.
 3. Write a plan:
    - the parameters

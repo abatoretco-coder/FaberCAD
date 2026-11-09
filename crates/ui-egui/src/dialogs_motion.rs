@@ -177,6 +177,15 @@ enum Transport {
 fn transport(ui: &mut egui::Ui, what: Transport, tip: &str) -> egui::Response {
     let t = Tokens::get();
     let (r, resp) = ui.allocate_exact_size(vec2(26.0, 22.0), Sense::click());
+    let handle = match what {
+        Transport::Start => "motion:start",
+        Transport::Back => "motion:back",
+        Transport::Play => "motion:play",
+        Transport::Stop => "motion:stop",
+        Transport::Forward => "motion:forward",
+        Transport::End => "motion:end",
+    };
+    crate::scenario::publish_handle(handle, r.center());
     let fill = if resp.hovered() { t.hover } else { t.field };
     ui.painter().rect(r, t.radius_sm.saturating_sub(1), fill, t.control_border_stroke(t.border), egui::StrokeKind::Inside);
     let c = r.center();
@@ -388,6 +397,10 @@ fn moved(before: &Session, after: &Session) -> BTreeMap<u64, Mat> {
         let was = before.doc.occurrences.iter().find(|b| b.id == o.id).map(|b| b.transform);
         if was != Some(o.transform) {
             out.insert(o.id, o.transform);
+        } else {
+            // The new pose can return to the document's placement. Drop the
+            // previous preview override instead of leaving the part there.
+            out.remove(&o.id);
         }
     }
     out
@@ -619,6 +632,8 @@ fn motion_study_rows(app: &mut SolveApp, ui: &mut egui::Ui, k: &mut Mo, inputs: 
                 0.0..=f64::from(total),
                 crate::ui_kit::Slider { show_value: false, integer: true, ..Default::default() },
             );
+            crate::scenario::publish_handle("motion:slider_start", slid.rect.left_center());
+            crate::scenario::publish_handle("motion:slider_end", slid.rect.right_center());
             if slid.changed() {
                 *step = whole;
             }
@@ -641,62 +656,64 @@ fn motion_study_rows(app: &mut SolveApp, ui: &mut egui::Ui, k: &mut Mo, inputs: 
     let now = step.round() as u32;
     let mut remove: Option<usize> = None;
     for (ti, tr) in tracks.iter_mut().enumerate() {
-        let labels: Vec<String> = moving.iter().map(|(_, n, _)| n.clone()).collect();
-        let refs: Vec<&str> = labels.iter().map(String::as_str).collect();
-        let mut pos = moving.iter().position(|(i, _, _)| *i == tr.joint).unwrap_or(0);
-        form_row(ui, &crate::i18n::format("motion.track_name", &[("number", &(ti + 1).to_string())]), |ui| {
-            ui.horizontal(|ui| {
-                let width = (ui.available_width() - t.control_height - t.space_8).max(0.0);
-                ui.allocate_ui(vec2(width, t.control_height), |ui| combo(ui, &format!("ms_joint{ti}"), &refs, &mut pos));
-                if crate::ui_kit::button(ui, crate::i18n::tr_label("×"), crate::ui_kit::Button::Small)
-                    .backing_on_hover_text(crate::i18n::tr_label("Remove the track"))
-                    .clicked()
-                {
-                    remove = Some(ti);
-                }
-            });
-        });
-        if let Some((ji, _, kind)) = moving.get(pos) {
-            tr.joint = *ji;
-            let dofs = kind.dofs();
-            if dofs.len() > 1 {
-                form_row(ui, "  Of", |ui| {
-                    let caps: Vec<&str> = dofs.to_vec();
-                    combo(ui, &format!("ms_idx{ti}"), &caps, &mut tr.index);
+        ui.push_id(("motion_track", ti), |ui| {
+            let labels: Vec<String> = moving.iter().map(|(_, n, _)| n.clone()).collect();
+            let refs: Vec<&str> = labels.iter().map(String::as_str).collect();
+            let mut pos = moving.iter().position(|(i, _, _)| *i == tr.joint).unwrap_or(0);
+            form_row(ui, &crate::i18n::format("motion.track_name", &[("number", &(ti + 1).to_string())]), |ui| {
+                ui.horizontal(|ui| {
+                    let width = (ui.available_width() - t.control_height - t.space_8).max(0.0);
+                    ui.allocate_ui(vec2(width, t.control_height), |ui| combo(ui, &format!("ms_joint{ti}"), &refs, &mut pos));
+                    if crate::ui_kit::button(ui, crate::i18n::tr_label("×"), crate::ui_kit::Button::Small)
+                        .backing_on_hover_text(crate::i18n::tr_label("Remove the track"))
+                        .clicked()
+                    {
+                        remove = Some(ti);
+                    }
                 });
-            } else {
-                tr.index = 0;
+            });
+            if let Some((ji, _, kind)) = moving.get(pos) {
+                tr.joint = *ji;
+                let dofs = kind.dofs();
+                if dofs.len() > 1 {
+                    form_row(ui, "  Of", |ui| {
+                        let caps: Vec<&str> = dofs.to_vec();
+                        combo(ui, &format!("ms_idx{ti}"), &caps, &mut tr.index);
+                    });
+                } else {
+                    tr.index = 0;
+                }
             }
-        }
-        form_row(ui, "  Keys", |ui| {
-            key_strip(ui, tr, total, now, &t);
-        });
-        // The key at this step, if any: its value.
-        if let Some(p) = tr.points.iter_mut().find(|(s, _)| *s == now) {
-            // The key's value (Enter commits it; OK makes the study).
-            let _ = expr_row(ui, "Value", &mut p.1);
-        }
-        ui.vertical(|ui| {
-            ui.horizontal(|ui| {
-                if crate::ui_kit::button(ui, crate::i18n::tr_label("Key here"), crate::ui_kit::Button::Small)
-                    .backing_on_hover_text(crate::i18n::tr_label("Add a key at this step with the joint's value now"))
-                    .clicked()
-                    && !tr.points.iter().any(|(s, _)| *s == now)
-                {
-                    let unit = app
-                        .session
-                        .doc
-                        .assembly
-                        .joints
-                        .get(tr.joint)
-                        .map(|j| if j.kind.is_angle(tr.index) { "deg" } else { crate::length_input::unit(&app.session.doc) })
-                        .unwrap_or(crate::length_input::unit(&app.session.doc));
-                    tr.points.push((now, format!("0 {unit}")));
-                    tr.points.sort_by_key(|p| p.0);
-                }
-                if crate::ui_kit::button(ui, crate::i18n::tr_label("Delete key"), crate::ui_kit::Button::Small).clicked() {
-                    tr.points.retain(|(s, _)| *s != now);
-                }
+            form_row(ui, "  Keys", |ui| {
+                key_strip(ui, tr, total, now, &t);
+            });
+            // The key at this step, if any: its value.
+            if let Some(p) = tr.points.iter_mut().find(|(s, _)| *s == now) {
+                // The key's value (Enter commits it; OK makes the study).
+                let _ = expr_row(ui, "Value", &mut p.1);
+            }
+            ui.vertical(|ui| {
+                ui.horizontal(|ui| {
+                    if crate::ui_kit::button(ui, crate::i18n::tr_label("Key here"), crate::ui_kit::Button::Small)
+                        .backing_on_hover_text(crate::i18n::tr_label("Add a key at this step with the joint's value now"))
+                        .clicked()
+                        && !tr.points.iter().any(|(s, _)| *s == now)
+                    {
+                        let unit = app
+                            .session
+                            .doc
+                            .assembly
+                            .joints
+                            .get(tr.joint)
+                            .map(|j| if j.kind.is_angle(tr.index) { "deg" } else { crate::length_input::unit(&app.session.doc) })
+                            .unwrap_or(crate::length_input::unit(&app.session.doc));
+                        tr.points.push((now, format!("0 {unit}")));
+                        tr.points.sort_by_key(|p| p.0);
+                    }
+                    if crate::ui_kit::button(ui, crate::i18n::tr_label("Delete key"), crate::ui_kit::Button::Small).clicked() {
+                        tr.points.retain(|(s, _)| *s != now);
+                    }
+                });
             });
         });
     }
@@ -871,6 +888,22 @@ mod tests {
             }
         }
         assert_eq!(seen.len(), 11, "every step 0..=10 is shown: {seen:?}");
+    }
+
+    #[test]
+    fn a_pose_returning_to_the_document_clears_the_previous_preview() {
+        let mut before = Session::default();
+        before.execute("component.create", &r#"{"name":"Panel"}"#.parse().unwrap()).unwrap();
+        let id = before.doc.occurrences[0].id;
+        let mut shifted = solidcraft_engine::doc::IDENTITY;
+        shifted[3] = [5.0, 0.0, 0.0, 1.0];
+        before.pending_moves.insert(id, shifted);
+        let mut after = before.scratch();
+        assert!(!moved(&before, &after).contains_key(&id));
+        std::sync::Arc::make_mut(&mut after.doc).occurrences[0].transform = shifted;
+        assert_eq!(moved(&before, &after).get(&id), Some(&shifted));
+        std::sync::Arc::make_mut(&mut after.doc).occurrences[0].transform = before.doc.occurrences[0].transform;
+        assert!(!moved(&before, &after).contains_key(&id));
     }
 
     /// What a dialog shows goes away when it closes; an exploded view applied with OK stays.

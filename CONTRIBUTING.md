@@ -1,5 +1,12 @@
 # Contributing to SolidCraft
 
+> FABER owner policy (2026-11-09): use `python scripts/faber_ci.py` for bounded
+> source checks (180 seconds / 1 GiB). The inherited full-suite instructions in
+> this document are historical and are not a routine commit gate. Do not start
+> native/workspace/browser builds or restore archived workflows without a new
+> explicit owner request. Source checks do not certify product behavior.
+> See [FABER CI](docs/faber/CI.md).
+
 Agents: start from the router in [AGENTS.md](AGENTS.md), which points to a short skill in [`skills/`](skills/README.md) for each kind of work. This page stays the full human guide.
 
 SolidCraft is an open-source parametric 3D CAD app written in pure Rust.

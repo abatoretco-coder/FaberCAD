@@ -1,0 +1,14 @@
+{
+  "commands": [
+    {"command": "file.new", "params": {"name": "FABER R1 printable bracket"}},
+    {"command": "parameters.add", "params": {"name": "plate_width", "expression": "60 mm", "favorite": true}},
+    {"command": "parameters.add", "params": {"name": "plate_depth", "expression": "30 mm"}},
+    {"command": "parameters.add", "params": {"name": "plate_thickness", "expression": "6 mm", "favorite": true}},
+    {"command": "parameters.add", "params": {"name": "hole_diameter", "expression": "8 mm", "favorite": true}},
+    {"command": "solid.box", "params": {"corner": [0, 0, 0], "length": "plate_width", "width": "plate_depth", "height": "plate_thickness", "body_name": "Print plate"}},
+    {"command": "solid.cylinder", "params": {"base": [15, 15, -1], "radius": "hole_diameter / 2", "height": "plate_thickness + 2 mm", "operation": "cut", "targets": ["Print plate"]}},
+    {"command": "solid.cylinder", "params": {"base": [45, 15, -1], "radius": "hole_diameter / 2", "height": "plate_thickness + 2 mm", "operation": "cut", "targets": ["Print plate"]}},
+    {"command": "material.create", "params": {"name": "Generic PLA", "density_g_cm3": 1.24, "color": "#2F80ED", "pbr": {"metallic": 0.0, "roughness": 0.55, "dielectric_ior": 1.46}}},
+    {"command": "material.assign", "params": {"bodies": ["Print plate"], "material": "Generic PLA"}}
+  ]
+}
