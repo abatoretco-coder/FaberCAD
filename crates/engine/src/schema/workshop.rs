@@ -68,6 +68,7 @@ pub struct Created {
 
 #[derive(Debug, Serialize, JsonSchema)]
 pub struct Catalogue {
+    pub furniture_catalogue: Value,
     pub materials: Vec<Value>,
     pub boards: Vec<Value>,
     pub printable_templates: Vec<String>,

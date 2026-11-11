@@ -87,3 +87,75 @@ fn invalid_inputs_and_material_conflicts_leave_design_unchanged() {
     assert!(s.execute("wood.board", &json!({"name":"Bad","material":"pine","length_mm":100,"width_mm":10,"thickness_mm":18})).is_err());
     assert!(s.doc.components.is_empty());
 }
+
+#[test]
+fn catalogue_lists_all_entries_and_inserts_custom_stock_as_one_undo_step() {
+    let mut s = Session::default();
+    let library = s.execute("workshop.library", &json!({})).unwrap();
+    let entries = library["furniture_catalogue"]["entries"].as_array().unwrap();
+    assert_eq!(entries.len(), 126);
+    assert_eq!(entries.iter().filter(|e| e["category"] == "board").count(), 36);
+    assert_eq!(library["boards"].as_array().unwrap().len(), 5);
+    let before = s.doc.clone();
+    let out = s
+        .execute(
+            "workshop.insert",
+            &json!({"id":"pine-1200x300x18","name":"Shelf",
+        "dimensions":{"length_mm":120,"width_mm":80}}),
+        )
+        .unwrap();
+    assert_eq!(out["parameters"]["length_mm"], 120.0);
+    let m = s.execute("inspect.measure", &json!({"bodies":["Shelf stock"]})).unwrap();
+    assert!((m["total"]["volume_mm3"].as_f64().unwrap() - 172800.0).abs() < 0.01);
+    let shelf = s.doc.components.iter().find(|c| c.name == "Shelf").unwrap();
+    assert_eq!(shelf.properties["grain_axis"], "length");
+    assert_eq!(shelf.properties["catalogue_id"], "pine-1200x300x18");
+    assert_eq!(shelf.properties["effective_recipe_sha256"].len(), 64);
+    s.execute("edit.undo", &json!({})).unwrap();
+    assert_eq!(s.doc, before);
+    s.execute("edit.redo", &json!({})).unwrap();
+    assert_eq!(s.execute("assembly.bom", &json!({})).unwrap()["total_occurrences"], 1);
+}
+
+#[test]
+fn catalogue_rejects_unknown_entries_bad_dimensions_and_body_name_collisions_atomically() {
+    let mut s = Session::default();
+    s.execute("solid.box", &json!({"body_name":"Pin envelope","length":10,"width":10,"height":10})).unwrap();
+    let before = s.doc.clone();
+    for input in [
+        json!({"id":"invented-product","name":"Pin"}),
+        json!({"id":"wood-dowel-8x30","name":"Pin"}),
+        json!({"id":"pine-1200x300x18","name":"Shelf","dimensions":{"length_mm":0}}),
+        json!({"id":"pine-1200x300x18","name":"Shelf","dimensions":{"length_mm":10001}}),
+        json!({"id":"wood-dowel-8x30","name":"Dowel","dimensions":{"unknown":1}}),
+        json!({"id":"angle-bracket-40","name":"Bracket","dimensions":{"thickness_mm":45}}),
+    ] {
+        assert!(s.execute("workshop.insert", &input).is_err(), "{input}");
+        assert_eq!(s.doc, before, "{input}");
+    }
+}
+
+#[test]
+fn catalogue_hardware_has_motion_provenance_and_a_single_undo_boundary() {
+    let mut s = Session::default();
+    let before = s.doc.clone();
+    let out = s.execute("workshop.insert", &json!({"id":"drawer-slide-350","name":"Slide","dimensions":{"travel":100}})).unwrap();
+    assert_eq!(out["components"], json!(["Slide fixed", "Slide moving"]));
+    assert_eq!(out["geometry_provenance"]["kind"], "envelope_proxy");
+    assert_eq!(s.execute("assembly.bom", &json!({})).unwrap()["total_occurrences"], 2);
+    let drive = s.execute("joint.drive", &json!({"joint":"Slide motion","value":50,"quiet":true})).unwrap();
+    assert_eq!(drive["moved"], true);
+    s.execute("edit.undo", &json!({})).unwrap();
+    s.execute("edit.undo", &json!({})).unwrap();
+    assert_eq!(s.doc, before);
+}
+
+#[test]
+fn catalogue_standard_fasteners_reuse_the_editable_standard_part_handler() {
+    let mut s = Session::default();
+    let inserted = s.execute("workshop.insert", &json!({"id":"socket_head_cap_screw-m4x20","name":"Screw","dimensions":{"length":30}})).unwrap();
+    assert_eq!(inserted["geometry_provenance"]["kind"], "procedural_standard");
+    s.execute("parts.resize", &json!({"component":"Screw","length":40})).unwrap();
+    assert_eq!(s.execute("assembly.bom", &json!({})).unwrap()["total_occurrences"], 1);
+    assert!(s.execute("workshop.insert", &json!({"id":"socket_head_cap_screw-m4x20","name":"Screw"})).is_err());
+}

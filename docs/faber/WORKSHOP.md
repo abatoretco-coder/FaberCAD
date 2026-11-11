@@ -7,8 +7,9 @@ standard hardware selector. All design actions are also engine/MCP commands.
 ## Catalogue and materials
 
 The [external furniture recipe catalogue](FURNITURE-CATALOGUE.md) adds 126
-board/panel and hardware selections for existing CLI/MCP commands. It is usable
-as data without rebuilding; it does not replace the compiled selector's presets.
+board/panel and hardware selections for existing CLI/MCP commands. Its native
+Catalogue tab and atomic `workshop.insert` command are now implemented in source.
+They require a future rebuild; portable recipes remain usable without one.
 
 `workshop.library {}` lists five generic stock formats (shelf, sheet, back,
 batten, worktop), ten wood/panel material presets, three original PLA templates,

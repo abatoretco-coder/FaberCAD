@@ -70,6 +70,7 @@ fn library(s: &mut Session, _p: &Value) -> Result<Value> {
     ];
     let hardware = s.execute("parts.library", &json!({}))?;
     Ok(json!(Catalogue {
+        furniture_catalogue: super::workshop_catalogue::catalogue()?,
         materials,
         boards,
         printable_templates: vec!["mounting_plate".into(), "spacer".into(), "angle_bracket".into()],

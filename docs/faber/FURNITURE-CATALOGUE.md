@@ -16,11 +16,53 @@ actual stock. Screws and other proxies do not qualify a joint for manufacture.
 
 ## Use now, without rebuilding FABER
 
-The catalogue is external data and command recipes. The existing compiled
-Workshop selector keeps its original presets; it does not dynamically load
-this file. Codex can read the catalogue, choose an ID and send the resulting
+The portable catalogue is data and command recipes. The existing compiled
+Workshop selector keeps its original presets until a future rebuild. Codex
+can read the catalogue, choose an ID and send the resulting
 commands through the existing MCP `batch` tool. No embedded AI or new MCP
-server is required. No Rust code, dependencies or native build were changed.
+server is required. No dependency was added and no native build was run.
+
+## Native Workshop integration (source, not rebuilt)
+
+The Workshop source now has a **Catalogue** tab with English/French reference
+search, board/hardware filters, a result count, editable dimensions and a unique
+component name. Selecting a reference loads its defaults. **Insert** adds one
+copy and keeps Workshop open; the name advances for the next copy. Search or
+category changes clear the selection, so a hidden result cannot be inserted.
+Invalid numbers and missing selections disable insertion. Engine rejections
+appear in the form without accepting partial geometry. Existing Workshop tabs
+and their presets remain available.
+
+`workshop.library {}` now includes `furniture_catalogue`, embedding the same
+`catalogue/furniture.json` at compile time. `workshop.insert` is the shared native
+UI/CLI/MCP path:
+
+```json
+{"id":"pine-1200x300x18","name":"Shelf 1","dimensions":{"length_mm":600,"width_mm":250}}
+```
+
+Only existing numeric parameters can be overridden. Material and nominal screw
+size follow the selected reference. Boards are limited to 10,000 mm and other
+numeric overrides to 2,000; template-specific constraints also apply. The command
+uses a scratch session, rejects name/body collisions, preserves the active
+component and accepts the complete insertion as one undo step. Hinge/slide
+geometry reuses `furniture.insert`; standard fixings reuse `parts.insert`.
+Custom generic envelopes use ordinary editable features. No Python process is
+started by the application.
+
+Native metadata records the selected ID, effective parameters and
+`effective_recipe_sha256`, including edited dimensions, plus geometry provenance
+and limitations. This is an effective recipe hash, not a native-solid hash.
+
+Seven native engine/UI tests have been added for insertion, dimensions, naming,
+motion, undo/redo, filtering, decimal commas and repeated one-click insertion.
+They were **not compiled or executed**. Only Rust syntax/formatting, source/data
+checks and lightweight Python tests were run. The new interface has not been
+rendered or keyboard/screen-reader qualified: doing so requires a new binary,
+and the owner prohibited compilation for this change. Controls reuse the
+existing labelled form rows and keyboard-operable egui selectors/buttons.
+
+## Portable commands
 
 From the FABER repository:
 
@@ -88,7 +130,7 @@ entries are not automatically inserted into a design or counted as procurement.
 
 ## Validation and limits
 
-Six lightweight tests cover every emitted recipe, stock/material compatibility,
+Seven lightweight tests cover emitted recipes, source UI translations, stock/material compatibility,
 existing standard-part parameters, provenance, hinge/slide relationships,
 explicit reset opt-in and invalid/unknown references. They never run CAD.
 

@@ -3742,6 +3742,7 @@ pub(crate) fn card_width(d: &Dialog) -> f32 {
 pub(crate) fn action_labels(kind: &Kind) -> (&'static str, &'static str) {
     match kind {
         Kind::Measure { .. } => ("", "Close"),
+        Kind::Workshop(k) if crate::dialogs_workshop::has_inline_insert(k) => ("", "Close"),
         Kind::ConfirmDelete { .. } => ("Delete", "Cancel"),
         Kind::SaveMesh(k) => (crate::dialogs_save_mesh::button(k), "Cancel"),
         Kind::ViewDxf { .. } => ("Export DXF…", "Cancel"),

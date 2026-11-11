@@ -1,6 +1,7 @@
 """Portable catalogue recipes: no CAD invocation or compilation during source CI."""
 import importlib.util
 import json
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -87,6 +88,19 @@ class FurnitureCatalogueTests(unittest.TestCase):
                                  capture_output=True, text=True, timeout=3)
         self.assertEqual(missing.returncode, 2)
         self.assertEqual(missing.stdout, '')
+
+    def test_workshop_catalogue_messages_resolve_in_english_and_french_without_duplicate_ids(self):
+        source = (ROOT/'crates/ui-egui/src/dialogs_workshop.rs').read_text(encoding='utf-8')
+        required = {'workshop.'+key for key in re.findall(r'tr\("(catalogue_[a-z_]+)"\)', source)}
+        required |= {'cmd.workshop.insert', 'workshop.catalogue', 'workshop.catalogue_search',
+                     'workshop.catalogue_category', 'workshop.catalogue_count', 'workshop.catalogue_inserted'}
+        for language in ('en', 'fr'):
+            messages = json.loads((ROOT/f'assets/locales/{language}.json').read_text(encoding='utf-8'))
+            for path in (ROOT/'assets/locales/pending').glob('*.json'):
+                pending = json.loads(path.read_text(encoding='utf-8')).get(language, {})
+                self.assertFalse(set(messages) & set(pending), f'Duplicate {language} messages in {path.name}')
+                messages.update(pending)
+            self.assertFalse(required-set(messages), f'Missing {language} messages: {required-set(messages)}')
 
 
 if __name__ == '__main__':

@@ -8,7 +8,7 @@ directory name, not another application.
 - [Product scope](SCOPE.md): dimensions, materials, assemblies, mechanisms,
   standard CAD parts and external MCP control.
 - [Workshop](WORKSHOP.md): wood stock, materials, hardware and PLA.
-- [Furniture catalogue](FURNITURE-CATALOGUE.md): 126 external board and hardware recipes for existing CLI/MCP commands, without rebuilding.
+- [Furniture catalogue](FURNITURE-CATALOGUE.md): 126 board/hardware recipes, plus native Workshop integration in source pending a future rebuild.
 - [Design workflows](DESIGN-WORKFLOWS.md): woodworking, hardware and qualification limits.
 - [MCP reference](../mcp.md): external automation.
 - [Lightweight CI](CI.md): bounded source checks, no automatic native build.

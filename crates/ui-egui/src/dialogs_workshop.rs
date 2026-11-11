@@ -36,6 +36,12 @@ pub struct Workshop {
     clearance: String,
     drilling_depth: String,
     dowel_count: String,
+    catalogue_search: String,
+    catalogue_category: usize,
+    catalogue_selected: Option<Value>,
+    catalogue_dimensions: std::collections::BTreeMap<String, String>,
+    catalogue_name: String,
+    catalogue_success: Option<String>,
 }
 
 fn tr(id: &str) -> String {
@@ -44,6 +50,10 @@ fn tr(id: &str) -> String {
 
 pub fn needs_picks(k: &Workshop) -> bool {
     matches!(k.tab, 2 | 3 | 4 | 5)
+}
+
+pub(crate) fn has_inline_insert(k: &Workshop) -> bool {
+    k.tab == 8
 }
 
 pub fn start(app: &SolveApp, id: &str) -> Option<(Kind, Vec<SelInput>)> {
@@ -85,6 +95,12 @@ pub fn start(app: &SolveApp, id: &str) -> Option<(Kind, Vec<SelInput>)> {
             clearance: "0.2".into(),
             drilling_depth: "12".into(),
             dowel_count: "2".into(),
+            catalogue_search: String::new(),
+            catalogue_category: 0,
+            catalogue_selected: None,
+            catalogue_dimensions: std::collections::BTreeMap::new(),
+            catalogue_name: String::new(),
+            catalogue_success: None,
         }),
         vec![SelInput::new("Bodies", BODIES, true)],
     ))
@@ -113,6 +129,7 @@ pub fn commands(app: &SolveApp, k: &Workshop, inputs: &[SelInput]) -> Result<Vec
         return Err(k.error.clone().unwrap_or_else(|| tr("catalogue_error")));
     }
     match k.tab {
+        8 => Ok(vec![("workshop.insert".into(), catalogue_params(k)?)]),
         0 => Ok(vec![(
             "wood.board".into(),
             json!({"name":k.name,"material":material_id(k),"length_mm":number(&k.length)?,"width_mm":number(&k.width)?,"thickness_mm":number(&k.thickness)?,"grain":if k.grain==0 {"length"} else {"width"}}),
@@ -154,7 +171,7 @@ pub fn commands(app: &SolveApp, k: &Workshop, inputs: &[SelInput]) -> Result<Vec
 
 pub fn rows(app: &mut SolveApp, ui: &mut egui::Ui, k: &mut Workshop, inputs: &mut [SelInput]) -> bool {
     ui.horizontal_wrapped(|ui| {
-        for (tab, key) in ["wood", "pla", "materials", "preflight", "hardware", "joinery", "cut_list", "furniture"].iter().enumerate() {
+        for (tab, key) in ["wood", "pla", "materials", "preflight", "hardware", "joinery", "cut_list", "furniture", "catalogue"].iter().enumerate() {
             let r = ui.selectable_label(k.tab == tab, tr(key));
             scenario::publish_handle(&format!("workshop:tab:{key}"), r.rect.center());
             if r.clicked() {
@@ -196,6 +213,10 @@ pub fn rows(app: &mut SolveApp, ui: &mut egui::Ui, k: &mut Workshop, inputs: &mu
     ui.separator();
     ui.push_id(("workshop_content", k.tab), |ui| {
         let mut enter = false;
+        if k.tab == 8 {
+            catalogue_rows(app, ui, k);
+            return false;
+        }
         if k.tab == 4 {
             return crate::dialogs_parts::rows(app, ui, &mut k.hardware, inputs);
         }
@@ -420,4 +441,222 @@ pub fn rows(app: &mut SolveApp, ui: &mut egui::Ui, k: &mut Workshop, inputs: &mu
         enter
     })
     .inner
+}
+
+fn catalogue_params(k: &Workshop) -> Result<Value, String> {
+    let entry = k.catalogue_selected.as_ref().ok_or_else(|| tr("catalogue_select"))?;
+    if k.catalogue_name.trim().is_empty()
+        || k.catalogue_name == "root"
+        || k.catalogue_name.chars().count() > 60
+        || k.catalogue_name.chars().any(char::is_control)
+    {
+        return Err(tr("catalogue_name_error"));
+    }
+    let dimensions: Result<std::collections::BTreeMap<_, _>, _> = k
+        .catalogue_dimensions
+        .iter()
+        .map(|(key, text)| {
+            let value = number(text)?;
+            let maximum = if entry["type"] == "board" { 10000.0 } else { 2000.0 };
+            if value <= 0.0 || value > maximum {
+                return Err(tr("catalogue_dimension_error"));
+            }
+            Ok((key.clone(), value))
+        })
+        .collect();
+    Ok(json!({"id":entry["id"],"name":k.catalogue_name,"dimensions":dimensions?}))
+}
+
+fn next_catalogue_name(app: &SolveApp, entry: &Value) -> String {
+    let base = entry["id"].as_str().unwrap_or("Catalogue");
+    (1..=app.session.doc.components.len() + 1)
+        .map(|n| format!("{base} {n}"))
+        .find(|name| {
+            !app.session.doc.components.iter().any(|c| c.name == *name || c.name == format!("{name} fixed") || c.name == format!("{name} moving"))
+        })
+        .unwrap_or_else(|| format!("Catalogue {}", app.session.doc.components.len() + 1))
+}
+
+fn catalogue_rows(app: &mut SolveApp, ui: &mut egui::Ui, k: &mut Workshop) {
+    let old_search = k.catalogue_search.clone();
+    let old_category = k.catalogue_category;
+    field(ui, "catalogue_search", &mut k.catalogue_search);
+    let labels = [tr("catalogue_all"), tr("catalogue_boards"), tr("catalogue_hardware")];
+    let response =
+        choice_row(ui, &tr("catalogue_category"), "workshop_catalogue_category", &mut k.catalogue_category, &[&labels[0], &labels[1], &labels[2]]);
+    scenario::publish_handle("workshop:catalogue_category", response.rect.center());
+    if old_search != k.catalogue_search || old_category != k.catalogue_category {
+        k.catalogue_selected = None;
+        k.catalogue_dimensions.clear();
+        k.catalogue_success = None;
+        k.error = None;
+    }
+    let search = k.catalogue_search.trim().to_lowercase();
+    let mut chosen = None;
+    let entries = k.catalogue["furniture_catalogue"]["entries"].as_array();
+    let mut count = 0;
+    egui::ScrollArea::vertical().id_salt("workshop_catalogue_results").max_height(crate::theme::Tokens::get().control_height * 6.0).show(ui, |ui| {
+        for entry in entries.into_iter().flatten() {
+            if (k.catalogue_category == 1 && entry["category"] != "board") || (k.catalogue_category == 2 && entry["category"] != "hardware") {
+                continue;
+            }
+            let matches = ["id", "name", "label_fr"].iter().any(|key| entry[*key].as_str().unwrap_or_default().to_lowercase().contains(&search));
+            if !matches {
+                continue;
+            }
+            count += 1;
+            let label_key = if crate::i18n::language().starts_with("fr") { "label_fr" } else { "name" };
+            let label = entry[label_key].as_str().unwrap_or_default().replace('_', " ");
+            let selected = k.catalogue_selected.as_ref().is_some_and(|e| e["id"] == entry["id"]);
+            let r = ui.selectable_label(selected, label);
+            scenario::publish_handle(&format!("workshop:catalogue:{}", entry["id"].as_str().unwrap_or_default()), r.rect.center());
+            if r.clicked() {
+                chosen = Some(entry.clone());
+            }
+        }
+    });
+    ui.label(crate::i18n::format("workshop.catalogue_count", &[("count", &count.to_string())]));
+    if count == 0 {
+        ui.label(tr("catalogue_empty"));
+    }
+    if let Some(entry) = chosen {
+        k.catalogue_name = next_catalogue_name(app, &entry);
+        k.catalogue_dimensions = entry["parameters"]
+            .as_object()
+            .into_iter()
+            .flatten()
+            .filter(|(_, value)| value.is_number())
+            .map(|(key, value)| (key.clone(), value.to_string()))
+            .collect();
+        k.catalogue_selected = Some(entry);
+        k.catalogue_success = None;
+        k.error = None;
+    }
+    if let Some(entry) = &k.catalogue_selected {
+        let before = (k.catalogue_name.clone(), k.catalogue_dimensions.clone());
+        ui.separator();
+        ui.label(entry["id"].as_str().unwrap_or_default());
+        // Size and material identifiers are catalogue data, not untranslated UI labels.
+        for key in ["material", "size"] {
+            if let Some(value) = entry["parameters"][key].as_str() {
+                ui.label(if key == "material" { tr(value) } else { value.to_string() });
+            }
+        }
+        field(ui, "name", &mut k.catalogue_name);
+        for (key, value) in &mut k.catalogue_dimensions {
+            let label = match key.as_str() {
+                "length_mm" | "length" => "length",
+                "width_mm" => "width",
+                "thickness_mm" => "thickness",
+                "diameter_mm" => "diameter",
+                "clearance_mm" => "clearance",
+                "travel" if entry["type"] == "butt_hinge" => "opening_angle",
+                "travel" => "sliding_travel",
+                _ => continue,
+            };
+            field(ui, label, value);
+        }
+        if before != (k.catalogue_name.clone(), k.catalogue_dimensions.clone()) {
+            k.error = None;
+            k.catalogue_success = None;
+        }
+    } else {
+        ui.label(tr("catalogue_select"));
+    }
+    ui_kit::text(ui, &tr("catalogue_limits"), ui_kit::Text::Note("catalogue_limits"));
+    let params = catalogue_params(k);
+    if k.catalogue_selected.is_some()
+        && let Err(error) = &params
+    {
+        ui_kit::text(ui, error, ui_kit::Text::Note("catalogue_validation"));
+    }
+    let insert = ui_kit::button(ui, tr("catalogue_insert"), Button::Enabled(params.is_ok()));
+    scenario::publish_handle("workshop:catalogue_insert", insert.rect.center());
+    if insert.clicked()
+        && let Ok(params) = params
+    {
+        match app.run("workshop.insert", params) {
+            Ok(_) => {
+                k.error = None;
+                k.catalogue_success = Some(crate::i18n::format("workshop.catalogue_inserted", &[("name", &k.catalogue_name)]));
+                if let Some(entry) = &k.catalogue_selected {
+                    k.catalogue_name = next_catalogue_name(app, entry);
+                }
+            }
+            Err(error) => {
+                k.error = Some(error.to_string());
+                k.catalogue_success = None;
+            }
+        }
+    }
+    if let Some(message) = &k.catalogue_success {
+        ui.label(message);
+    }
+    if let Some(error) = &k.error {
+        ui_kit::text(ui, error, ui_kit::Text::Note("catalogue_error"));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn catalogue_requires_selection_and_accepts_decimal_comma_dimensions() {
+        let h = crate::scenario::Harness::new();
+        let (Kind::Workshop(mut k), _) = start(&h.app, "workshop.library").unwrap() else { panic!("expected Workshop") };
+        k.tab = 8;
+        assert_eq!(crate::dialogs::action_labels(&Kind::Workshop(k.clone())), ("", "Close"));
+        assert!(catalogue_params(&k).is_err());
+        k.catalogue_selected = Some(json!({"id":"pine-1200x300x18","type":"board"}));
+        k.catalogue_name = "Shelf 1".into();
+        k.catalogue_dimensions.insert("length_mm".into(), "450,5".into());
+        let params = commands(&h.app, &k, &[]).unwrap();
+        assert_eq!(params[0].0, "workshop.insert");
+        assert_eq!(params[0].1["dimensions"]["length_mm"], 450.5);
+        for invalid in ["0", "NaN", "10001", "-3"] {
+            k.catalogue_dimensions.insert("length_mm".into(), invalid.into());
+            assert!(catalogue_params(&k).is_err());
+        }
+    }
+
+    #[test]
+    fn catalogue_controls_clear_a_hidden_selection_and_expose_no_result_state() {
+        let mut h = crate::scenario::Harness::new();
+        h.app.home.open = false;
+        h.app.start("workshop.library");
+        h.frames(3);
+        h.step(&json!({"click":{"handle":"workshop:tab:catalogue"}})).unwrap();
+        h.frames(2);
+        h.step(&json!({"click":{"handle":"workshop:catalogue:pine-1200x300x18"}})).unwrap();
+        h.frames(2);
+        let Kind::Workshop(k) = &h.app.dialog.as_ref().unwrap().kind else { panic!("expected Workshop") };
+        assert!(catalogue_params(k).is_ok());
+        h.step(&json!({"click":{"handle":"workshop:field:catalogue_search"}})).unwrap();
+        h.step(&json!({"text":"no-such-catalogue-item"})).unwrap();
+        h.frames(2);
+        let Kind::Workshop(k) = &h.app.dialog.as_ref().unwrap().kind else { panic!("expected Workshop") };
+        assert!(k.catalogue_selected.is_none());
+        assert!(catalogue_params(k).is_err());
+    }
+
+    #[test]
+    fn catalogue_insert_button_adds_one_copy_per_click_without_closing_the_workshop() {
+        let mut h = crate::scenario::Harness::new();
+        h.app.home.open = false;
+        h.app.start("workshop.library");
+        h.frames(3);
+        h.step(&json!({"click":{"handle":"workshop:tab:catalogue"}})).unwrap();
+        h.frames(2);
+        h.step(&json!({"click":{"handle":"workshop:catalogue:pine-1200x300x18"}})).unwrap();
+        h.frames(2);
+        for count in 1..=2 {
+            h.step(&json!({"click":{"handle":"workshop:catalogue_insert"}})).unwrap();
+            h.frames(2);
+            assert_eq!(h.app.session.doc.components.len(), count);
+            assert!(matches!(h.app.dialog.as_ref().unwrap().kind, Kind::Workshop(_)));
+        }
+        h.app.run("edit.undo", json!({})).unwrap();
+        assert_eq!(h.app.session.doc.components.len(), 1);
+    }
 }

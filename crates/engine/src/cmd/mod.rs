@@ -86,6 +86,7 @@ mod script;
 mod section;
 pub mod settings;
 mod workshop;
+mod workshop_catalogue;
 mod workshop_hardware;
 mod workshop_wood;
 pub(crate) use clipboard::{component_path_form, copy_keys};
@@ -357,6 +358,7 @@ pub fn command_specs() -> Vec<&'static CommandSpec> {
     v.extend(config::COMMANDS.iter());
     v.extend(parts::COMMANDS.iter());
     v.extend(workshop::COMMANDS.iter());
+    v.extend(workshop_catalogue::COMMANDS.iter());
     v.extend(workshop_hardware::COMMANDS.iter());
     v.extend(workshop_wood::COMMANDS.iter());
     v.extend(bom::COMMANDS.iter());

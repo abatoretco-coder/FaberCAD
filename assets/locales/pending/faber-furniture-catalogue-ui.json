@@ -1,0 +1,36 @@
+{
+  "en": {
+    "cmd.workshop.insert": "Insert Catalogue Part",
+    "workshop.catalogue": "Catalogue",
+    "workshop.catalogue_all": "All references",
+    "workshop.catalogue_boards": "Boards and panels",
+    "workshop.catalogue_category": "Category",
+    "workshop.catalogue_count": "{count} references",
+    "workshop.catalogue_dimension_error": "Enter positive dimensions within the template limits.",
+    "workshop.catalogue_empty": "No matching references. Try another search.",
+    "workshop.catalogue_hardware": "Furniture hardware",
+    "workshop.catalogue_insert": "Insert",
+    "workshop.catalogue_inserted": "Inserted {name}. Ready for another copy.",
+    "workshop.catalogue_limits": "Generic editable design geometry. Measure actual stock and select real hardware before drilling; no supplier mounting pattern or load rating.",
+    "workshop.catalogue_name_error": "Choose a unique name of 1–60 printable characters.",
+    "workshop.catalogue_search": "Search references",
+    "workshop.catalogue_select": "Select a reference to edit its dimensions."
+  },
+  "fr": {
+    "cmd.workshop.insert": "Insérer une pièce du catalogue",
+    "workshop.catalogue": "Catalogue",
+    "workshop.catalogue_all": "Toutes les références",
+    "workshop.catalogue_boards": "Planches et panneaux",
+    "workshop.catalogue_category": "Catégorie",
+    "workshop.catalogue_count": "{count} références",
+    "workshop.catalogue_dimension_error": "Saisis des dimensions positives dans les limites du modèle.",
+    "workshop.catalogue_empty": "Aucune référence correspondante. Essaie une autre recherche.",
+    "workshop.catalogue_hardware": "Quincaillerie",
+    "workshop.catalogue_insert": "Insérer",
+    "workshop.catalogue_inserted": "{name} ajouté. Prêt pour un autre exemplaire.",
+    "workshop.catalogue_limits": "Géométrie générique modifiable. Mesure le bois et choisis la quincaillerie réelle avant perçage ; sans patron de pose ni charge admissible.",
+    "workshop.catalogue_name_error": "Choisis un nom unique de 1 à 60 caractères imprimables.",
+    "workshop.catalogue_search": "Rechercher une référence",
+    "workshop.catalogue_select": "Sélectionne une référence pour modifier ses dimensions."
+  }
+}
