@@ -1,0 +1,1711 @@
+{
+  "schema_version": 1,
+  "units": "mm",
+  "provenance": {
+    "source": "FABER original furniture recipes; existing workshop and standard-part commands",
+    "license_or_usage_status": "MIT OR Apache-2.0; original catalogue and recipes; no third-party CAD",
+    "generated_from_evidence": false,
+    "manufacturer_reference": null,
+    "procurement_snapshot": null,
+    "limitations": [
+      "Nominal design templates, not supplier stock or manufacturer CAD.",
+      "No product-specific strength, grade, finish, price or availability is asserted.",
+      "Measure actual stock; select real hardware before drilling.",
+      "Proxy hardware has no threads, sockets, mounting holes or supplier drilling pattern; not for manufacturing."
+    ]
+  },
+  "entries": [
+    {
+      "id": "pine-1200x300x18",
+      "name": "pine blank 1200 x 300 x 18",
+      "label_fr": "Pin 1200 × 300 × 18 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "pine",
+        "length_mm": 1200,
+        "width_mm": 300,
+        "thickness_mm": 18,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "pine-2000x300x18",
+      "name": "pine blank 2000 x 300 x 18",
+      "label_fr": "Pin 2000 × 300 × 18 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "pine",
+        "length_mm": 2000,
+        "width_mm": 300,
+        "thickness_mm": 18,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "pine-2000x400x18",
+      "name": "pine blank 2000 x 400 x 18",
+      "label_fr": "Pin 2000 × 400 × 18 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "pine",
+        "length_mm": 2000,
+        "width_mm": 400,
+        "thickness_mm": 18,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "pine-2000x600x27",
+      "name": "pine blank 2000 x 600 x 27",
+      "label_fr": "Pin 2000 × 600 × 27 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "pine",
+        "length_mm": 2000,
+        "width_mm": 600,
+        "thickness_mm": 27,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "spruce-2000x40x27",
+      "name": "spruce blank 2000 x 40 x 27",
+      "label_fr": "Sapin 2000 × 40 × 27 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "spruce",
+        "length_mm": 2000,
+        "width_mm": 40,
+        "thickness_mm": 27,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "spruce-2400x60x40",
+      "name": "spruce blank 2400 x 60 x 40",
+      "label_fr": "Sapin 2400 × 60 × 40 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "spruce",
+        "length_mm": 2400,
+        "width_mm": 60,
+        "thickness_mm": 40,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "spruce-2400x90x45",
+      "name": "spruce blank 2400 x 90 x 45",
+      "label_fr": "Sapin 2400 × 90 × 45 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "spruce",
+        "length_mm": 2400,
+        "width_mm": 90,
+        "thickness_mm": 45,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "oak-1200x300x18",
+      "name": "oak blank 1200 x 300 x 18",
+      "label_fr": "Chêne 1200 × 300 × 18 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "oak",
+        "length_mm": 1200,
+        "width_mm": 300,
+        "thickness_mm": 18,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "oak-2000x400x20",
+      "name": "oak blank 2000 x 400 x 20",
+      "label_fr": "Chêne 2000 × 400 × 20 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "oak",
+        "length_mm": 2000,
+        "width_mm": 400,
+        "thickness_mm": 20,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "oak-2000x600x27",
+      "name": "oak blank 2000 x 600 x 27",
+      "label_fr": "Chêne 2000 × 600 × 27 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "oak",
+        "length_mm": 2000,
+        "width_mm": 600,
+        "thickness_mm": 27,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "beech-1200x300x18",
+      "name": "beech blank 1200 x 300 x 18",
+      "label_fr": "Hêtre 1200 × 300 × 18 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "beech",
+        "length_mm": 1200,
+        "width_mm": 300,
+        "thickness_mm": 18,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "beech-2000x400x20",
+      "name": "beech blank 2000 x 400 x 20",
+      "label_fr": "Hêtre 2000 × 400 × 20 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "beech",
+        "length_mm": 2000,
+        "width_mm": 400,
+        "thickness_mm": 20,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "beech-2000x600x27",
+      "name": "beech blank 2000 x 600 x 27",
+      "label_fr": "Hêtre 2000 × 600 × 27 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "beech",
+        "length_mm": 2000,
+        "width_mm": 600,
+        "thickness_mm": 27,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "walnut-1200x300x20",
+      "name": "walnut blank 1200 x 300 x 20",
+      "label_fr": "Noyer 1200 × 300 × 20 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "walnut",
+        "length_mm": 1200,
+        "width_mm": 300,
+        "thickness_mm": 20,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "walnut-2000x400x27",
+      "name": "walnut blank 2000 x 400 x 27",
+      "label_fr": "Noyer 2000 × 400 × 27 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "walnut",
+        "length_mm": 2000,
+        "width_mm": 400,
+        "thickness_mm": 27,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "birch_plywood-2440x1220x6",
+      "name": "birch_plywood blank 2440 x 1220 x 6",
+      "label_fr": "Contreplaqué bouleau 2440 × 1220 × 6 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "birch_plywood",
+        "length_mm": 2440,
+        "width_mm": 1220,
+        "thickness_mm": 6,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "birch_plywood-2440x1220x9",
+      "name": "birch_plywood blank 2440 x 1220 x 9",
+      "label_fr": "Contreplaqué bouleau 2440 × 1220 × 9 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "birch_plywood",
+        "length_mm": 2440,
+        "width_mm": 1220,
+        "thickness_mm": 9,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "birch_plywood-2440x1220x12",
+      "name": "birch_plywood blank 2440 x 1220 x 12",
+      "label_fr": "Contreplaqué bouleau 2440 × 1220 × 12 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "birch_plywood",
+        "length_mm": 2440,
+        "width_mm": 1220,
+        "thickness_mm": 12,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "birch_plywood-2440x1220x15",
+      "name": "birch_plywood blank 2440 x 1220 x 15",
+      "label_fr": "Contreplaqué bouleau 2440 × 1220 × 15 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "birch_plywood",
+        "length_mm": 2440,
+        "width_mm": 1220,
+        "thickness_mm": 15,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "birch_plywood-2440x1220x18",
+      "name": "birch_plywood blank 2440 x 1220 x 18",
+      "label_fr": "Contreplaqué bouleau 2440 × 1220 × 18 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "birch_plywood",
+        "length_mm": 2440,
+        "width_mm": 1220,
+        "thickness_mm": 18,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "birch_plywood-2440x1220x21",
+      "name": "birch_plywood blank 2440 x 1220 x 21",
+      "label_fr": "Contreplaqué bouleau 2440 × 1220 × 21 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "birch_plywood",
+        "length_mm": 2440,
+        "width_mm": 1220,
+        "thickness_mm": 21,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "poplar_plywood-2500x1220x5",
+      "name": "poplar_plywood blank 2500 x 1220 x 5",
+      "label_fr": "Contreplaqué peuplier 2500 × 1220 × 5 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "poplar_plywood",
+        "length_mm": 2500,
+        "width_mm": 1220,
+        "thickness_mm": 5,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "poplar_plywood-2500x1220x10",
+      "name": "poplar_plywood blank 2500 x 1220 x 10",
+      "label_fr": "Contreplaqué peuplier 2500 × 1220 × 10 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "poplar_plywood",
+        "length_mm": 2500,
+        "width_mm": 1220,
+        "thickness_mm": 10,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "poplar_plywood-2500x1220x15",
+      "name": "poplar_plywood blank 2500 x 1220 x 15",
+      "label_fr": "Contreplaqué peuplier 2500 × 1220 × 15 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "poplar_plywood",
+        "length_mm": 2500,
+        "width_mm": 1220,
+        "thickness_mm": 15,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "poplar_plywood-2500x1220x18",
+      "name": "poplar_plywood blank 2500 x 1220 x 18",
+      "label_fr": "Contreplaqué peuplier 2500 × 1220 × 18 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "poplar_plywood",
+        "length_mm": 2500,
+        "width_mm": 1220,
+        "thickness_mm": 18,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "mdf-2440x1220x6",
+      "name": "mdf blank 2440 x 1220 x 6",
+      "label_fr": "MDF 2440 × 1220 × 6 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "mdf",
+        "length_mm": 2440,
+        "width_mm": 1220,
+        "thickness_mm": 6,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "mdf-2440x1220x10",
+      "name": "mdf blank 2440 x 1220 x 10",
+      "label_fr": "MDF 2440 × 1220 × 10 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "mdf",
+        "length_mm": 2440,
+        "width_mm": 1220,
+        "thickness_mm": 10,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "mdf-2440x1220x16",
+      "name": "mdf blank 2440 x 1220 x 16",
+      "label_fr": "MDF 2440 × 1220 × 16 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "mdf",
+        "length_mm": 2440,
+        "width_mm": 1220,
+        "thickness_mm": 16,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "mdf-2440x1220x18",
+      "name": "mdf blank 2440 x 1220 x 18",
+      "label_fr": "MDF 2440 × 1220 × 18 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "mdf",
+        "length_mm": 2440,
+        "width_mm": 1220,
+        "thickness_mm": 18,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "mdf-2440x1220x22",
+      "name": "mdf blank 2440 x 1220 x 22",
+      "label_fr": "MDF 2440 × 1220 × 22 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "mdf",
+        "length_mm": 2440,
+        "width_mm": 1220,
+        "thickness_mm": 22,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "particleboard-2500x1250x16",
+      "name": "particleboard blank 2500 x 1250 x 16",
+      "label_fr": "Aggloméré 2500 × 1250 × 16 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "particleboard",
+        "length_mm": 2500,
+        "width_mm": 1250,
+        "thickness_mm": 16,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "particleboard-2500x1250x18",
+      "name": "particleboard blank 2500 x 1250 x 18",
+      "label_fr": "Aggloméré 2500 × 1250 × 18 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "particleboard",
+        "length_mm": 2500,
+        "width_mm": 1250,
+        "thickness_mm": 18,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "particleboard-2500x1250x22",
+      "name": "particleboard blank 2500 x 1250 x 22",
+      "label_fr": "Aggloméré 2500 × 1250 × 22 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "particleboard",
+        "length_mm": 2500,
+        "width_mm": 1250,
+        "thickness_mm": 22,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "osb-2500x1250x12",
+      "name": "osb blank 2500 x 1250 x 12",
+      "label_fr": "OSB 2500 × 1250 × 12 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "osb",
+        "length_mm": 2500,
+        "width_mm": 1250,
+        "thickness_mm": 12,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "osb-2500x1250x15",
+      "name": "osb blank 2500 x 1250 x 15",
+      "label_fr": "OSB 2500 × 1250 × 15 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "osb",
+        "length_mm": 2500,
+        "width_mm": 1250,
+        "thickness_mm": 15,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "osb-2500x1250x18",
+      "name": "osb blank 2500 x 1250 x 18",
+      "label_fr": "OSB 2500 × 1250 × 18 mm",
+      "category": "board",
+      "type": "board",
+      "parameters": {
+        "material": "osb",
+        "length_mm": 2500,
+        "width_mm": 1250,
+        "thickness_mm": 18,
+        "grain": "length"
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "socket_head_cap_screw-m4x16",
+      "name": "socket_head_cap_screw M4 x 16",
+      "label_fr": "Vis CHC M4 × 16",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "socket_head_cap_screw",
+        "size": "M4",
+        "length": 16
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "socket_head_cap_screw-m4x20",
+      "name": "socket_head_cap_screw M4 x 20",
+      "label_fr": "Vis CHC M4 × 20",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "socket_head_cap_screw",
+        "size": "M4",
+        "length": 20
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "socket_head_cap_screw-m4x30",
+      "name": "socket_head_cap_screw M4 x 30",
+      "label_fr": "Vis CHC M4 × 30",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "socket_head_cap_screw",
+        "size": "M4",
+        "length": 30
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "socket_head_cap_screw-m4x40",
+      "name": "socket_head_cap_screw M4 x 40",
+      "label_fr": "Vis CHC M4 × 40",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "socket_head_cap_screw",
+        "size": "M4",
+        "length": 40
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "socket_head_cap_screw-m5x16",
+      "name": "socket_head_cap_screw M5 x 16",
+      "label_fr": "Vis CHC M5 × 16",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "socket_head_cap_screw",
+        "size": "M5",
+        "length": 16
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "socket_head_cap_screw-m5x20",
+      "name": "socket_head_cap_screw M5 x 20",
+      "label_fr": "Vis CHC M5 × 20",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "socket_head_cap_screw",
+        "size": "M5",
+        "length": 20
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "socket_head_cap_screw-m5x30",
+      "name": "socket_head_cap_screw M5 x 30",
+      "label_fr": "Vis CHC M5 × 30",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "socket_head_cap_screw",
+        "size": "M5",
+        "length": 30
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "socket_head_cap_screw-m5x40",
+      "name": "socket_head_cap_screw M5 x 40",
+      "label_fr": "Vis CHC M5 × 40",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "socket_head_cap_screw",
+        "size": "M5",
+        "length": 40
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "socket_head_cap_screw-m6x16",
+      "name": "socket_head_cap_screw M6 x 16",
+      "label_fr": "Vis CHC M6 × 16",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "socket_head_cap_screw",
+        "size": "M6",
+        "length": 16
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "socket_head_cap_screw-m6x20",
+      "name": "socket_head_cap_screw M6 x 20",
+      "label_fr": "Vis CHC M6 × 20",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "socket_head_cap_screw",
+        "size": "M6",
+        "length": 20
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "socket_head_cap_screw-m6x30",
+      "name": "socket_head_cap_screw M6 x 30",
+      "label_fr": "Vis CHC M6 × 30",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "socket_head_cap_screw",
+        "size": "M6",
+        "length": 30
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "socket_head_cap_screw-m6x40",
+      "name": "socket_head_cap_screw M6 x 40",
+      "label_fr": "Vis CHC M6 × 40",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "socket_head_cap_screw",
+        "size": "M6",
+        "length": 40
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "socket_head_cap_screw-m8x16",
+      "name": "socket_head_cap_screw M8 x 16",
+      "label_fr": "Vis CHC M8 × 16",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "socket_head_cap_screw",
+        "size": "M8",
+        "length": 16
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "socket_head_cap_screw-m8x20",
+      "name": "socket_head_cap_screw M8 x 20",
+      "label_fr": "Vis CHC M8 × 20",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "socket_head_cap_screw",
+        "size": "M8",
+        "length": 20
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "socket_head_cap_screw-m8x30",
+      "name": "socket_head_cap_screw M8 x 30",
+      "label_fr": "Vis CHC M8 × 30",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "socket_head_cap_screw",
+        "size": "M8",
+        "length": 30
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "socket_head_cap_screw-m8x40",
+      "name": "socket_head_cap_screw M8 x 40",
+      "label_fr": "Vis CHC M8 × 40",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "socket_head_cap_screw",
+        "size": "M8",
+        "length": 40
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "button_head_cap_screw-m4x16",
+      "name": "button_head_cap_screw M4 x 16",
+      "label_fr": "Vis tête bombée M4 × 16",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "button_head_cap_screw",
+        "size": "M4",
+        "length": 16
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "button_head_cap_screw-m4x20",
+      "name": "button_head_cap_screw M4 x 20",
+      "label_fr": "Vis tête bombée M4 × 20",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "button_head_cap_screw",
+        "size": "M4",
+        "length": 20
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "button_head_cap_screw-m4x30",
+      "name": "button_head_cap_screw M4 x 30",
+      "label_fr": "Vis tête bombée M4 × 30",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "button_head_cap_screw",
+        "size": "M4",
+        "length": 30
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "button_head_cap_screw-m4x40",
+      "name": "button_head_cap_screw M4 x 40",
+      "label_fr": "Vis tête bombée M4 × 40",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "button_head_cap_screw",
+        "size": "M4",
+        "length": 40
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "button_head_cap_screw-m5x16",
+      "name": "button_head_cap_screw M5 x 16",
+      "label_fr": "Vis tête bombée M5 × 16",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "button_head_cap_screw",
+        "size": "M5",
+        "length": 16
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "button_head_cap_screw-m5x20",
+      "name": "button_head_cap_screw M5 x 20",
+      "label_fr": "Vis tête bombée M5 × 20",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "button_head_cap_screw",
+        "size": "M5",
+        "length": 20
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "button_head_cap_screw-m5x30",
+      "name": "button_head_cap_screw M5 x 30",
+      "label_fr": "Vis tête bombée M5 × 30",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "button_head_cap_screw",
+        "size": "M5",
+        "length": 30
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "button_head_cap_screw-m5x40",
+      "name": "button_head_cap_screw M5 x 40",
+      "label_fr": "Vis tête bombée M5 × 40",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "button_head_cap_screw",
+        "size": "M5",
+        "length": 40
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "button_head_cap_screw-m6x16",
+      "name": "button_head_cap_screw M6 x 16",
+      "label_fr": "Vis tête bombée M6 × 16",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "button_head_cap_screw",
+        "size": "M6",
+        "length": 16
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "button_head_cap_screw-m6x20",
+      "name": "button_head_cap_screw M6 x 20",
+      "label_fr": "Vis tête bombée M6 × 20",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "button_head_cap_screw",
+        "size": "M6",
+        "length": 20
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "button_head_cap_screw-m6x30",
+      "name": "button_head_cap_screw M6 x 30",
+      "label_fr": "Vis tête bombée M6 × 30",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "button_head_cap_screw",
+        "size": "M6",
+        "length": 30
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "button_head_cap_screw-m6x40",
+      "name": "button_head_cap_screw M6 x 40",
+      "label_fr": "Vis tête bombée M6 × 40",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "button_head_cap_screw",
+        "size": "M6",
+        "length": 40
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "button_head_cap_screw-m8x16",
+      "name": "button_head_cap_screw M8 x 16",
+      "label_fr": "Vis tête bombée M8 × 16",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "button_head_cap_screw",
+        "size": "M8",
+        "length": 16
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "button_head_cap_screw-m8x20",
+      "name": "button_head_cap_screw M8 x 20",
+      "label_fr": "Vis tête bombée M8 × 20",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "button_head_cap_screw",
+        "size": "M8",
+        "length": 20
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "button_head_cap_screw-m8x30",
+      "name": "button_head_cap_screw M8 x 30",
+      "label_fr": "Vis tête bombée M8 × 30",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "button_head_cap_screw",
+        "size": "M8",
+        "length": 30
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "button_head_cap_screw-m8x40",
+      "name": "button_head_cap_screw M8 x 40",
+      "label_fr": "Vis tête bombée M8 × 40",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "button_head_cap_screw",
+        "size": "M8",
+        "length": 40
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "hex_bolt-m4x16",
+      "name": "hex_bolt M4 x 16",
+      "label_fr": "Boulon hexagonal M4 × 16",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "hex_bolt",
+        "size": "M4",
+        "length": 16
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "hex_bolt-m4x20",
+      "name": "hex_bolt M4 x 20",
+      "label_fr": "Boulon hexagonal M4 × 20",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "hex_bolt",
+        "size": "M4",
+        "length": 20
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "hex_bolt-m4x30",
+      "name": "hex_bolt M4 x 30",
+      "label_fr": "Boulon hexagonal M4 × 30",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "hex_bolt",
+        "size": "M4",
+        "length": 30
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "hex_bolt-m4x40",
+      "name": "hex_bolt M4 x 40",
+      "label_fr": "Boulon hexagonal M4 × 40",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "hex_bolt",
+        "size": "M4",
+        "length": 40
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "hex_bolt-m5x16",
+      "name": "hex_bolt M5 x 16",
+      "label_fr": "Boulon hexagonal M5 × 16",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "hex_bolt",
+        "size": "M5",
+        "length": 16
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "hex_bolt-m5x20",
+      "name": "hex_bolt M5 x 20",
+      "label_fr": "Boulon hexagonal M5 × 20",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "hex_bolt",
+        "size": "M5",
+        "length": 20
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "hex_bolt-m5x30",
+      "name": "hex_bolt M5 x 30",
+      "label_fr": "Boulon hexagonal M5 × 30",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "hex_bolt",
+        "size": "M5",
+        "length": 30
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "hex_bolt-m5x40",
+      "name": "hex_bolt M5 x 40",
+      "label_fr": "Boulon hexagonal M5 × 40",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "hex_bolt",
+        "size": "M5",
+        "length": 40
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "hex_bolt-m6x16",
+      "name": "hex_bolt M6 x 16",
+      "label_fr": "Boulon hexagonal M6 × 16",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "hex_bolt",
+        "size": "M6",
+        "length": 16
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "hex_bolt-m6x20",
+      "name": "hex_bolt M6 x 20",
+      "label_fr": "Boulon hexagonal M6 × 20",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "hex_bolt",
+        "size": "M6",
+        "length": 20
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "hex_bolt-m6x30",
+      "name": "hex_bolt M6 x 30",
+      "label_fr": "Boulon hexagonal M6 × 30",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "hex_bolt",
+        "size": "M6",
+        "length": 30
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "hex_bolt-m6x40",
+      "name": "hex_bolt M6 x 40",
+      "label_fr": "Boulon hexagonal M6 × 40",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "hex_bolt",
+        "size": "M6",
+        "length": 40
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "hex_bolt-m8x16",
+      "name": "hex_bolt M8 x 16",
+      "label_fr": "Boulon hexagonal M8 × 16",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "hex_bolt",
+        "size": "M8",
+        "length": 16
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "hex_bolt-m8x20",
+      "name": "hex_bolt M8 x 20",
+      "label_fr": "Boulon hexagonal M8 × 20",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "hex_bolt",
+        "size": "M8",
+        "length": 20
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "hex_bolt-m8x30",
+      "name": "hex_bolt M8 x 30",
+      "label_fr": "Boulon hexagonal M8 × 30",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "hex_bolt",
+        "size": "M8",
+        "length": 30
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "hex_bolt-m8x40",
+      "name": "hex_bolt M8 x 40",
+      "label_fr": "Boulon hexagonal M8 × 40",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "hex_bolt",
+        "size": "M8",
+        "length": 40
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "hex_nut-m4",
+      "name": "hex_nut M4",
+      "label_fr": "Écrou hexagonal M4",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "hex_nut",
+        "size": "M4"
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "hex_nut-m5",
+      "name": "hex_nut M5",
+      "label_fr": "Écrou hexagonal M5",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "hex_nut",
+        "size": "M5"
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "hex_nut-m6",
+      "name": "hex_nut M6",
+      "label_fr": "Écrou hexagonal M6",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "hex_nut",
+        "size": "M6"
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "hex_nut-m8",
+      "name": "hex_nut M8",
+      "label_fr": "Écrou hexagonal M8",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "hex_nut",
+        "size": "M8"
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "washer-m4",
+      "name": "washer M4",
+      "label_fr": "Rondelle plate M4",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "washer",
+        "size": "M4"
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "washer-m5",
+      "name": "washer M5",
+      "label_fr": "Rondelle plate M5",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "washer",
+        "size": "M5"
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "washer-m6",
+      "name": "washer M6",
+      "label_fr": "Rondelle plate M6",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "washer",
+        "size": "M6"
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "washer-m8",
+      "name": "washer M8",
+      "label_fr": "Rondelle plate M8",
+      "category": "hardware",
+      "type": "standard",
+      "parameters": {
+        "family": "washer",
+        "size": "M8"
+      },
+      "geometry_kind": "procedural_standard"
+    },
+    {
+      "id": "wood-dowel-6x30",
+      "name": "Wood dowel 6 x 30",
+      "label_fr": "Tourillon bois 6 × 30 mm",
+      "category": "hardware",
+      "type": "wood_dowel",
+      "parameters": {
+        "diameter_mm": 6,
+        "length_mm": 30
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "wood-dowel-6x40",
+      "name": "Wood dowel 6 x 40",
+      "label_fr": "Tourillon bois 6 × 40 mm",
+      "category": "hardware",
+      "type": "wood_dowel",
+      "parameters": {
+        "diameter_mm": 6,
+        "length_mm": 40
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "wood-dowel-8x30",
+      "name": "Wood dowel 8 x 30",
+      "label_fr": "Tourillon bois 8 × 30 mm",
+      "category": "hardware",
+      "type": "wood_dowel",
+      "parameters": {
+        "diameter_mm": 8,
+        "length_mm": 30
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "wood-dowel-8x40",
+      "name": "Wood dowel 8 x 40",
+      "label_fr": "Tourillon bois 8 × 40 mm",
+      "category": "hardware",
+      "type": "wood_dowel",
+      "parameters": {
+        "diameter_mm": 8,
+        "length_mm": 40
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "wood-dowel-10x30",
+      "name": "Wood dowel 10 x 30",
+      "label_fr": "Tourillon bois 10 × 30 mm",
+      "category": "hardware",
+      "type": "wood_dowel",
+      "parameters": {
+        "diameter_mm": 10,
+        "length_mm": 30
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "wood-dowel-10x40",
+      "name": "Wood dowel 10 x 40",
+      "label_fr": "Tourillon bois 10 × 40 mm",
+      "category": "hardware",
+      "type": "wood_dowel",
+      "parameters": {
+        "diameter_mm": 10,
+        "length_mm": 40
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "wood-screw-3.5x16",
+      "name": "Wood screw allowance 3.5 x 16",
+      "label_fr": "Vis à bois 3.5 × 16 mm (enveloppe)",
+      "category": "hardware",
+      "type": "wood_screw",
+      "parameters": {
+        "diameter_mm": 3.5,
+        "length_mm": 16
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "wood-screw-3.5x25",
+      "name": "Wood screw allowance 3.5 x 25",
+      "label_fr": "Vis à bois 3.5 × 25 mm (enveloppe)",
+      "category": "hardware",
+      "type": "wood_screw",
+      "parameters": {
+        "diameter_mm": 3.5,
+        "length_mm": 25
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "wood-screw-3.5x35",
+      "name": "Wood screw allowance 3.5 x 35",
+      "label_fr": "Vis à bois 3.5 × 35 mm (enveloppe)",
+      "category": "hardware",
+      "type": "wood_screw",
+      "parameters": {
+        "diameter_mm": 3.5,
+        "length_mm": 35
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "wood-screw-3.5x50",
+      "name": "Wood screw allowance 3.5 x 50",
+      "label_fr": "Vis à bois 3.5 × 50 mm (enveloppe)",
+      "category": "hardware",
+      "type": "wood_screw",
+      "parameters": {
+        "diameter_mm": 3.5,
+        "length_mm": 50
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "wood-screw-4x16",
+      "name": "Wood screw allowance 4 x 16",
+      "label_fr": "Vis à bois 4 × 16 mm (enveloppe)",
+      "category": "hardware",
+      "type": "wood_screw",
+      "parameters": {
+        "diameter_mm": 4,
+        "length_mm": 16
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "wood-screw-4x25",
+      "name": "Wood screw allowance 4 x 25",
+      "label_fr": "Vis à bois 4 × 25 mm (enveloppe)",
+      "category": "hardware",
+      "type": "wood_screw",
+      "parameters": {
+        "diameter_mm": 4,
+        "length_mm": 25
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "wood-screw-4x35",
+      "name": "Wood screw allowance 4 x 35",
+      "label_fr": "Vis à bois 4 × 35 mm (enveloppe)",
+      "category": "hardware",
+      "type": "wood_screw",
+      "parameters": {
+        "diameter_mm": 4,
+        "length_mm": 35
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "wood-screw-4x50",
+      "name": "Wood screw allowance 4 x 50",
+      "label_fr": "Vis à bois 4 × 50 mm (enveloppe)",
+      "category": "hardware",
+      "type": "wood_screw",
+      "parameters": {
+        "diameter_mm": 4,
+        "length_mm": 50
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "wood-screw-5x16",
+      "name": "Wood screw allowance 5 x 16",
+      "label_fr": "Vis à bois 5 × 16 mm (enveloppe)",
+      "category": "hardware",
+      "type": "wood_screw",
+      "parameters": {
+        "diameter_mm": 5,
+        "length_mm": 16
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "wood-screw-5x25",
+      "name": "Wood screw allowance 5 x 25",
+      "label_fr": "Vis à bois 5 × 25 mm (enveloppe)",
+      "category": "hardware",
+      "type": "wood_screw",
+      "parameters": {
+        "diameter_mm": 5,
+        "length_mm": 25
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "wood-screw-5x35",
+      "name": "Wood screw allowance 5 x 35",
+      "label_fr": "Vis à bois 5 × 35 mm (enveloppe)",
+      "category": "hardware",
+      "type": "wood_screw",
+      "parameters": {
+        "diameter_mm": 5,
+        "length_mm": 35
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "wood-screw-5x50",
+      "name": "Wood screw allowance 5 x 50",
+      "label_fr": "Vis à bois 5 × 50 mm (enveloppe)",
+      "category": "hardware",
+      "type": "wood_screw",
+      "parameters": {
+        "diameter_mm": 5,
+        "length_mm": 50
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "shelf-pin-5x16",
+      "name": "Shelf pin allowance 5 x 16",
+      "label_fr": "Taquet cylindrique 5 × 16 mm",
+      "category": "hardware",
+      "type": "shelf_pin",
+      "parameters": {
+        "diameter_mm": 5,
+        "length_mm": 16
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "shelf-pin-5x20",
+      "name": "Shelf pin allowance 5 x 20",
+      "label_fr": "Taquet cylindrique 5 × 20 mm",
+      "category": "hardware",
+      "type": "shelf_pin",
+      "parameters": {
+        "diameter_mm": 5,
+        "length_mm": 20
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "shelf-pin-6x16",
+      "name": "Shelf pin allowance 6 x 16",
+      "label_fr": "Taquet cylindrique 6 × 16 mm",
+      "category": "hardware",
+      "type": "shelf_pin",
+      "parameters": {
+        "diameter_mm": 6,
+        "length_mm": 16
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "shelf-pin-6x20",
+      "name": "Shelf pin allowance 6 x 20",
+      "label_fr": "Taquet cylindrique 6 × 20 mm",
+      "category": "hardware",
+      "type": "shelf_pin",
+      "parameters": {
+        "diameter_mm": 6,
+        "length_mm": 20
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "angle-bracket-30",
+      "name": "Angle bracket allowance 30",
+      "label_fr": "Équerre 30 mm (enveloppe)",
+      "category": "hardware",
+      "type": "angle_bracket",
+      "parameters": {
+        "length_mm": 30,
+        "width_mm": 20,
+        "thickness_mm": 2
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "angle-bracket-40",
+      "name": "Angle bracket allowance 40",
+      "label_fr": "Équerre 40 mm (enveloppe)",
+      "category": "hardware",
+      "type": "angle_bracket",
+      "parameters": {
+        "length_mm": 40,
+        "width_mm": 20,
+        "thickness_mm": 2
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "angle-bracket-60",
+      "name": "Angle bracket allowance 60",
+      "label_fr": "Équerre 60 mm (enveloppe)",
+      "category": "hardware",
+      "type": "angle_bracket",
+      "parameters": {
+        "length_mm": 60,
+        "width_mm": 20,
+        "thickness_mm": 2
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "butt-hinge-40x30",
+      "name": "Butt hinge allowance 40 x 30",
+      "label_fr": "Charnière 40 × 30 mm (enveloppe)",
+      "category": "hardware",
+      "type": "butt_hinge",
+      "parameters": {
+        "length_mm": 40,
+        "width_mm": 30,
+        "thickness_mm": 2,
+        "travel": 110,
+        "clearance_mm": 0.5
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "butt-hinge-60x40",
+      "name": "Butt hinge allowance 60 x 40",
+      "label_fr": "Charnière 60 × 40 mm (enveloppe)",
+      "category": "hardware",
+      "type": "butt_hinge",
+      "parameters": {
+        "length_mm": 60,
+        "width_mm": 40,
+        "thickness_mm": 2,
+        "travel": 110,
+        "clearance_mm": 0.5
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "butt-hinge-80x50",
+      "name": "Butt hinge allowance 80 x 50",
+      "label_fr": "Charnière 80 × 50 mm (enveloppe)",
+      "category": "hardware",
+      "type": "butt_hinge",
+      "parameters": {
+        "length_mm": 80,
+        "width_mm": 50,
+        "thickness_mm": 2,
+        "travel": 110,
+        "clearance_mm": 0.5
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "drawer-slide-250",
+      "name": "Drawer slide allowance 250",
+      "label_fr": "Coulisse 250 mm (enveloppe)",
+      "category": "hardware",
+      "type": "drawer_slide",
+      "parameters": {
+        "length_mm": 250,
+        "width_mm": 20,
+        "thickness_mm": 10,
+        "travel": 187.5,
+        "clearance_mm": 0.5
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "drawer-slide-350",
+      "name": "Drawer slide allowance 350",
+      "label_fr": "Coulisse 350 mm (enveloppe)",
+      "category": "hardware",
+      "type": "drawer_slide",
+      "parameters": {
+        "length_mm": 350,
+        "width_mm": 20,
+        "thickness_mm": 10,
+        "travel": 262.5,
+        "clearance_mm": 0.5
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "drawer-slide-450",
+      "name": "Drawer slide allowance 450",
+      "label_fr": "Coulisse 450 mm (enveloppe)",
+      "category": "hardware",
+      "type": "drawer_slide",
+      "parameters": {
+        "length_mm": 450,
+        "width_mm": 20,
+        "thickness_mm": 10,
+        "travel": 337.5,
+        "clearance_mm": 0.5
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "foot-pad-30",
+      "name": "Foot pad allowance 30",
+      "label_fr": "Patin 30 × 30 × 5 mm",
+      "category": "hardware",
+      "type": "foot_pad",
+      "parameters": {
+        "length_mm": 30,
+        "width_mm": 30,
+        "thickness_mm": 5
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "foot-pad-40",
+      "name": "Foot pad allowance 40",
+      "label_fr": "Patin 40 × 40 × 5 mm",
+      "category": "hardware",
+      "type": "foot_pad",
+      "parameters": {
+        "length_mm": 40,
+        "width_mm": 40,
+        "thickness_mm": 5
+      },
+      "geometry_kind": "envelope_proxy"
+    },
+    {
+      "id": "foot-pad-50",
+      "name": "Foot pad allowance 50",
+      "label_fr": "Patin 50 × 50 × 5 mm",
+      "category": "hardware",
+      "type": "foot_pad",
+      "parameters": {
+        "length_mm": 50,
+        "width_mm": 50,
+        "thickness_mm": 5
+      },
+      "geometry_kind": "envelope_proxy"
+    }
+  ]
+}
